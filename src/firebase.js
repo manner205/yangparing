@@ -2,13 +2,13 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDAZ_QVNSjjufvZOzUTDBf719m6QA4T1lk",
-  authDomain: "trip-backend-a4cee.firebaseapp.com",
-  databaseURL: "https://trip-backend-a4cee-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "trip-backend-a4cee",
-  storageBucket: "trip-backend-a4cee.firebasestorage.app",
-  messagingSenderId: "937006607726",
-  appId: "1:937006607726:web:938a77edc5a4669ad8e57f",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
