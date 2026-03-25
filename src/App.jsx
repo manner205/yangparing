@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { db } from "./firebase";
+import { collection, doc, onSnapshot, addDoc, deleteDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 // ─── Initial Data ───────────────────────────────────────────────
 const MEMBERS = ["전진아","이형석","장인현","변영선","홍대우","한상민","이상민","오지선","이지은","김차훈","배정아","이영호"];
@@ -122,10 +124,7 @@ function parseInvestCSV(csv) {
 // ─── Utility ────────────────────────────────────────────────────
 const fmt = n => n?.toLocaleString("ko-KR") ?? "0";
 
-const storage = {
-  get: (key) => { const v = localStorage.getItem(key); return v ? { value: v } : null; },
-  set: (key, value) => { localStorage.setItem(key, value); },
-};
+
 
 async function fetchStockInfo(code) {
   const res = await fetch(`/naver-finance/api/stock/${code}/basic`);
@@ -181,9 +180,16 @@ export default function App() {
   // Load from Google Sheets on mount
   useEffect(() => { loadSheetData(); }, [loadSheetData]);
 
-  // Load votes from storage
+  // ─── Firestore 실시간 연동: 여행정보 ─────────────────────────────
   useEffect(() => {
-    try { const r4 = storage.get("yangpa-votes"); if(r4) { const d=JSON.parse(r4.value); setCandidates(d.candidates); setVotes(d.votes); } } catch(e){}
+    const unsub = onSnapshot(doc(db, "trip", "voteData"), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.candidates) setCandidates(data.candidates);
+        if (data.votes) setVotes(data.votes);
+      }
+    });
+    return () => unsub();
   }, []);
 
   // ─── 실시간 주가 자동갱신 ────────────────────────────────────────
@@ -209,10 +215,10 @@ export default function App() {
   const savePayments = useCallback((p) => { setPayments(p); },[]);
   const saveStocks = useCallback((s,c) => { setStocks(s); setCashBalance(c); },[]);
   const saveDeposits = useCallback((d) => { setDeposits(d); },[]);
-  const saveVotes = useCallback((cands,v) => {
+  const saveVotes = useCallback(async (cands, v) => {
     setCandidates(cands); setVotes(v);
-    try { storage.set("yangpa-votes", JSON.stringify({candidates:cands,votes:v})); } catch(e){}
-  },[]);
+    try { await setDoc(doc(db, "trip", "voteData"), { candidates: cands, votes: v }); } catch(e) { console.error(e); }
+  }, []);
 
   // ─── Access Gate ──────────────────────────────────────────────
   if (!accessGranted) {
@@ -905,27 +911,38 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
 // ─── Money Tab ──────────────────────────────────────────────────
 function MoneyTab({isAdmin}) {
   const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({title:"", category:"연금", content:"", link:""});
   const CATEGORIES = ["연금","ETF"];
+  const categoryColors = { "연금": "#6366F1", "ETF": "#10B981" };
 
-  const addPost = () => {
+  // Firestore 실시간 연동
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "moneyPosts"), (snap) => {
+      const data = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
+      setPosts(data);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
+  const addPost = async () => {
     if(!form.title.trim() || !form.content.trim()) return;
-    const newPost = {
-      id: Date.now(),
-      ...form,
-      author: "관리자",
-      createdAt: new Date().toLocaleDateString("ko-KR"),
-    };
-    setPosts(prev => [newPost, ...prev]);
-    setForm({title:"", category:"연금", content:"", link:""});
-    setShowForm(false);
+    try {
+      await addDoc(collection(db, "moneyPosts"), {
+        ...form,
+        createdAt: serverTimestamp(),
+      });
+      setForm({title:"", category:"연금", content:"", link:""});
+      setShowForm(false);
+    } catch(e) { console.error(e); }
   };
 
-  const removePost = (id) => setPosts(prev => prev.filter(p => p.id !== id));
-
-  const categoryColors = {
-    "연금": "#6366F1", "ETF": "#10B981",
+  const removePost = async (id) => {
+    try { await deleteDoc(doc(db, "moneyPosts", id)); } catch(e) { console.error(e); }
   };
 
   return (
@@ -977,7 +994,11 @@ function MoneyTab({isAdmin}) {
       </div>
 
       {/* Posts */}
-      {posts.length === 0 ? (
+      {loading ? (
+        <div style={{...styles.sectionCard, textAlign:"center", padding:"40px 20px", marginTop:16}}>
+          <p style={{color:"rgba(255,255,255,0.4)", fontSize:14}}>불러오는 중...</p>
+        </div>
+      ) : posts.length === 0 ? (
         <div style={{...styles.sectionCard, textAlign:"center", padding:"40px 20px", marginTop:16}}>
           <div style={{fontSize:48, marginBottom:12}}>💡</div>
           <p style={{color:"rgba(255,255,255,0.4)", fontSize:14}}>아직 공유된 정보가 없습니다</p>
@@ -1013,11 +1034,6 @@ function MoneyTab({isAdmin}) {
         ))
       )}
 
-      {/* Coming soon notice */}
-      <div style={{...styles.sectionCard, marginTop:16, textAlign:"center", padding:"16px 20px",
-        background:"rgba(99,102,241,0.05)", border:"1px dashed rgba(99,102,241,0.2)"}}>
-        <p style={{fontSize:12,color:"rgba(255,255,255,0.3)"}}>🚧 Firebase 연동 예정 · 현재는 임시 로컬 데이터로 동작합니다</p>
-      </div>
     </div>
   );
 }
