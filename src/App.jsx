@@ -907,7 +907,7 @@ function MoneyTab({isAdmin}) {
   const [posts, setPosts] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({title:"", category:"연금", content:"", link:""});
-  const CATEGORIES = ["연금","ETF·펀드","부동산","절세","보험","기타"];
+  const CATEGORIES = ["연금","ETF"];
 
   const addPost = () => {
     if(!form.title.trim() || !form.content.trim()) return;
@@ -925,8 +925,7 @@ function MoneyTab({isAdmin}) {
   const removePost = (id) => setPosts(prev => prev.filter(p => p.id !== id));
 
   const categoryColors = {
-    "연금": "#6366F1", "ETF·펀드": "#10B981", "부동산": "#F59E0B",
-    "절세": "#EC4899", "보험": "#14B8A6", "기타": "#8B5CF6",
+    "연금": "#6366F1", "ETF": "#10B981",
   };
 
   return (
