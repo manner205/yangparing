@@ -1513,9 +1513,9 @@ function VoteTab({candidates, votes, voterName, setVoterName, handleVote, isAdmi
         {/* Voter select */}
         <div style={styles.voterSelect}>
           <label style={styles.voterLabel}>투표자 이름</label>
-          <select value={voterName} onChange={e=>setVoterName(e.target.value)} style={styles.selectInput}>
-            <option value="">이름을 선택하세요</option>
-            {members.map(m=><option key={m} value={m}>{m}</option>)}
+          <select value={voterName} onChange={e=>setVoterName(e.target.value)} style={{...styles.selectInput, background:"#1e1e35", color:"#fff", border:"1px solid rgba(255,255,255,0.25)", fontSize:15, fontWeight:500}}>
+            <option value="" style={{background:"#1e1e35",color:"#aaa"}}>이름을 선택하세요</option>
+            {members.map(m=><option key={m} value={m} style={{background:"#1e1e35",color:"#fff"}}>{m}</option>)}
           </select>
           {myVote && <span style={styles.votedBadge}>투표 완료 ✅</span>}
         </div>
