@@ -47,6 +47,49 @@ const INITIAL_DEPOSITS = [
    amount:1000000, rate:2.80, maturityAmount:1023690}
 ];
 
+const COUNTRY_FLAG_MAP = [
+  {keywords:["일본","오사카","도쿄","교토","후쿠오카","삿포로","나고야","오키나와"], emoji:"🇯🇵"},
+  {keywords:["베트남","다낭","하노이","호치민","나트랑","푸꾸옥","호이안","하롱"], emoji:"🇻🇳"},
+  {keywords:["태국","방콕","치앙마이","푸켓","파타야","코사무이"], emoji:"🇹🇭"},
+  {keywords:["대만","타이페이","타이베이"], emoji:"🇹🇼"},
+  {keywords:["싱가포르"], emoji:"🇸🇬"},
+  {keywords:["홍콩"], emoji:"🇭🇰"},
+  {keywords:["마카오"], emoji:"🇲🇴"},
+  {keywords:["필리핀","마닐라","세부","보라카이","팔라완"], emoji:"🇵🇭"},
+  {keywords:["인도네시아","발리","자카르타","롬복"], emoji:"🇮🇩"},
+  {keywords:["말레이시아","쿠알라룸푸르","코타키나발루","랑카위","페낭"], emoji:"🇲🇾"},
+  {keywords:["캄보디아","앙코르","씨엠립","프놈펜"], emoji:"🇰🇭"},
+  {keywords:["미국","뉴욕","LA","로스앤젤레스","라스베가스","하와이","샌프란시스코"], emoji:"🇺🇸"},
+  {keywords:["유럽","프랑스","파리"], emoji:"🇫🇷"},
+  {keywords:["스페인","마드리드","바르셀로나"], emoji:"🇪🇸"},
+  {keywords:["이탈리아","로마","밀라노","베네치아","피렌체"], emoji:"🇮🇹"},
+  {keywords:["영국","런던"], emoji:"🇬🇧"},
+  {keywords:["독일","베를린","뮌헨"], emoji:"🇩🇪"},
+  {keywords:["호주","시드니","멜버른"], emoji:"🇦🇺"},
+  {keywords:["뉴질랜드","오클랜드"], emoji:"🇳🇿"},
+  {keywords:["터키","이스탄불"], emoji:"🇹🇷"},
+  {keywords:["그리스","아테네","산토리니"], emoji:"🇬🇷"},
+  {keywords:["포르투갈","리스본"], emoji:"🇵🇹"},
+  {keywords:["체코","프라하"], emoji:"🇨🇿"},
+  {keywords:["헝가리","부다페스트"], emoji:"🇭🇺"},
+  {keywords:["크로아티아","두브로브니크"], emoji:"🇭🇷"},
+  {keywords:["한국","서울","부산","제주"], emoji:"🇰🇷"},
+  {keywords:["중국","베이징","상하이","청두"], emoji:"🇨🇳"},
+  {keywords:["인도","뭄바이","델리","고아"], emoji:"🇮🇳"},
+  {keywords:["네팔","카트만두"], emoji:"🇳🇵"},
+  {keywords:["스리랑카"], emoji:"🇱🇰"},
+  {keywords:["모로코","마라케시"], emoji:"🇲🇦"},
+  {keywords:["두바이","아랍에미리트","UAE"], emoji:"🇦🇪"},
+];
+
+function detectCountryEmoji(name) {
+  const lower = name.toLowerCase();
+  for (const entry of COUNTRY_FLAG_MAP) {
+    if (entry.keywords.some(k => lower.includes(k.toLowerCase()))) return entry.emoji;
+  }
+  return null;
+}
+
 const INITIAL_CANDIDATES = [
   {id:1,name:"일본 오사카",desc:"맛집 투어와 유니버셜 스튜디오",emoji:"🇯🇵"},
   {id:2,name:"베트남 다낭",desc:"리조트 휴양과 호이안 관광",emoji:"🇻🇳"},
@@ -1527,7 +1570,7 @@ function VoteTab({candidates, votes, voterName, setVoterName, handleVote, isAdmi
           <h3 style={styles.sectionTitle}>🛠 후보지 관리 (관리자)</h3>
           <div style={styles.addCandForm}>
             <input placeholder="이모지 (예: 🇯🇵)" value={newCandidate.emoji} onChange={e=>setNewCandidate({...newCandidate,emoji:e.target.value})} style={{...styles.inputSmall,width:80}}/>
-            <input placeholder="여행지 이름" value={newCandidate.name} onChange={e=>setNewCandidate({...newCandidate,name:e.target.value})} style={styles.inputSmall}/>
+            <input placeholder="여행지 이름" value={newCandidate.name} onChange={e=>{const name=e.target.value; const detected=detectCountryEmoji(name); setNewCandidate({...newCandidate,name,emoji:detected||newCandidate.emoji});}} style={styles.inputSmall}/>
             <input placeholder="설명" value={newCandidate.desc} onChange={e=>setNewCandidate({...newCandidate,desc:e.target.value})} style={{...styles.inputSmall,flex:1}}/>
             <button style={styles.btnSmallPrimary} onClick={addCandidate}>추가</button>
           </div>
