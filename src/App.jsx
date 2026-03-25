@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { db } from "./firebase";
+import { db, storage } from "./firebase";
 import { collection, doc, onSnapshot, addDoc, deleteDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // ─── Initial Data ───────────────────────────────────────────────
 const MEMBERS = ["전진아","이형석","장인현","변영선","홍대우","한상민","이상민","오지선","이지은","김차훈","배정아","이영호"];
@@ -909,11 +910,17 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
 }
 
 // ─── Money Tab ──────────────────────────────────────────────────
+const EMPTY_FORM = {title:"", category:"연금", content:"", link:""};
+
 function MoneyTab({isAdmin}) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({title:"", category:"연금", content:"", link:""});
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
   const CATEGORIES = ["연금","ETF"];
   const categoryColors = { "연금": "#6366F1", "ETF": "#10B981" };
 
@@ -929,16 +936,39 @@ function MoneyTab({isAdmin}) {
     return () => unsub();
   }, []);
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const resetForm = () => {
+    setForm(EMPTY_FORM);
+    setImageFile(null);
+    setImagePreview(null);
+    setShowForm(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const addPost = async () => {
     if(!form.title.trim() || !form.content.trim()) return;
+    setUploading(true);
     try {
+      let imageUrl = "";
+      if (imageFile) {
+        const storageRef = ref(storage, `moneyPosts/${Date.now()}_${imageFile.name}`);
+        await uploadBytes(storageRef, imageFile);
+        imageUrl = await getDownloadURL(storageRef);
+      }
       await addDoc(collection(db, "moneyPosts"), {
         ...form,
+        imageUrl,
         createdAt: serverTimestamp(),
       });
-      setForm({title:"", category:"연금", content:"", link:""});
-      setShowForm(false);
+      resetForm();
     } catch(e) { console.error(e); }
+    finally { setUploading(false); }
   };
 
   const removePost = async (id) => {
@@ -952,7 +982,7 @@ function MoneyTab({isAdmin}) {
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
           <div>
             <h3 style={{...styles.sectionTitle, margin:0}}>💎 머니머니</h3>
-            <p style={{fontSize:13,color:"rgba(255,255,255,0.45)",marginTop:6}}>연금, 재테크, 절세 등 유용한 금융 정보를 공유해요</p>
+            <p style={{fontSize:13,color:"rgba(255,255,255,0.45)",marginTop:6}}>연금, 재테크 등 유용한 금융 정보를 공유해요</p>
           </div>
           {isAdmin && (
             <button style={styles.btnSmallPrimary} onClick={()=>setShowForm(!showForm)}>
@@ -975,10 +1005,30 @@ function MoneyTab({isAdmin}) {
           <textarea placeholder="내용을 입력하세요..." value={form.content} onChange={e=>setForm({...form,content:e.target.value})}
             style={{...styles.inputSmall, width:"100%", minHeight:100, resize:"vertical", marginBottom:10}}/>
           <input placeholder="참고 링크 (선택)" value={form.link} onChange={e=>setForm({...form,link:e.target.value})}
-            style={{...styles.inputSmall, width:"100%", marginBottom:14}}/>
+            style={{...styles.inputSmall, width:"100%", marginBottom:10}}/>
+
+          {/* 이미지 첨부 */}
+          <div style={{marginBottom:14}}>
+            <button style={{...styles.btnSecondary, fontSize:12}} onClick={()=>fileInputRef.current?.click()}>
+              🖼️ 이미지 첨부 {imageFile ? `(${imageFile.name})` : "(선택)"}
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} style={{display:"none"}}/>
+            {imagePreview && (
+              <div style={{marginTop:10, position:"relative", display:"inline-block"}}>
+                <img src={imagePreview} alt="미리보기" style={{maxWidth:"100%", maxHeight:200, borderRadius:8, objectFit:"cover"}}/>
+                <button onClick={()=>{setImageFile(null);setImagePreview(null);if(fileInputRef.current)fileInputRef.current.value="";}}
+                  style={{position:"absolute",top:4,right:4,background:"rgba(0,0,0,0.6)",border:"none",color:"#fff",borderRadius:"50%",width:24,height:24,cursor:"pointer",fontSize:14}}>
+                  ×
+                </button>
+              </div>
+            )}
+          </div>
+
           <div style={{display:"flex",gap:8}}>
-            <button style={styles.btnSmallPrimary} onClick={addPost}>등록</button>
-            <button style={styles.btnSecondary} onClick={()=>{setShowForm(false);setForm({title:"",category:"연금",content:"",link:""});}}>취소</button>
+            <button style={styles.btnSmallPrimary} onClick={addPost} disabled={uploading}>
+              {uploading ? "업로드 중..." : "등록"}
+            </button>
+            <button style={styles.btnSecondary} onClick={resetForm}>취소</button>
           </div>
         </div>
       )}
@@ -1015,7 +1065,9 @@ function MoneyTab({isAdmin}) {
                     color:categoryColors[post.category]}}>
                     {post.category}
                   </span>
-                  <span style={{fontSize:11,color:"rgba(255,255,255,0.3)"}}>{post.createdAt}</span>
+                  <span style={{fontSize:11,color:"rgba(255,255,255,0.3)"}}>
+                    {post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString("ko-KR") : ""}
+                  </span>
                 </div>
                 <h4 style={{fontSize:15,fontWeight:700,color:"rgba(255,255,255,0.9)",marginBottom:8}}>{post.title}</h4>
               </div>
@@ -1024,6 +1076,10 @@ function MoneyTab({isAdmin}) {
               )}
             </div>
             <p style={{fontSize:13,color:"rgba(255,255,255,0.6)",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{post.content}</p>
+            {post.imageUrl && (
+              <img src={post.imageUrl} alt="첨부 이미지"
+                style={{marginTop:12, maxWidth:"100%", borderRadius:10, objectFit:"cover", maxHeight:400, display:"block"}}/>
+            )}
             {post.link && (
               <a href={post.link} target="_blank" rel="noopener noreferrer"
                 style={{display:"inline-block",marginTop:10,fontSize:12,color:"#6366F1",textDecoration:"underline"}}>
@@ -1033,7 +1089,6 @@ function MoneyTab({isAdmin}) {
           </div>
         ))
       )}
-
     </div>
   );
 }
