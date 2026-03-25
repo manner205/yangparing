@@ -324,7 +324,8 @@ export default function App() {
     {key:"home",label:"홈",icon:"🏠"},
     {key:"payments",label:"납입현황",icon:"💰"},
     {key:"invest",label:"투자현황",icon:"📈"},
-    {key:"vote",label:"여행투표",icon:"✈️"},
+    {key:"money",label:"머니머니",icon:"💎"},
+    {key:"vote",label:"여행정보",icon:"✈️"},
   ];
 
   return (
@@ -426,7 +427,7 @@ export default function App() {
           if (pullY >= 80 && !isRefreshing) loadSheetData();
           setPullY(0);
           if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
-          const TAB_KEYS = ["home","payments","invest","vote"];
+          const TAB_KEYS = ["home","payments","invest","money","vote"];
           const cur = TAB_KEYS.indexOf(activeTab);
           if (dx < 0 && cur < TAB_KEYS.length - 1) setActiveTab(TAB_KEYS[cur + 1]);
           if (dx > 0 && cur > 0) setActiveTab(TAB_KEYS[cur - 1]);
@@ -435,6 +436,7 @@ export default function App() {
         {activeTab==="home" && <HomeTab totalCollected={totalCollected} stockTotal={stockTotal} depositTotal={depositTotal} tossBalance={tossBalance} progressPct={progressPct} currentProgress={currentProgress} members={MEMBERS} payments={payments} setActiveTab={setActiveTab} />}
         {activeTab==="payments" && <PaymentsTab payments={payments} isAdmin={isAdmin} togglePayment={togglePayment} />}
         {activeTab==="invest" && <InvestTab stocks={stocks} cashBalance={cashBalance} deposits={deposits} isAdmin={isAdmin} stockTotal={stockTotal} stockInvested={stockInvested} stockProfit={stockProfit} stockReturn={stockReturn} editingStock={editingStock} setEditingStock={setEditingStock} saveStockEdit={saveStockEdit} removeStock={removeStock} showNewStock={showNewStock} setShowNewStock={setShowNewStock} newStock={newStock} setNewStock={setNewStock} addStock={addStock} saveStocks={saveStocks} saveDeposits={saveDeposits} />}
+        {activeTab==="money" && <MoneyTab isAdmin={isAdmin} />}
         {activeTab==="vote" && <VoteTab candidates={candidates} votes={votes} voterName={voterName} setVoterName={setVoterName} handleVote={handleVote} isAdmin={isAdmin} addCandidate={addCandidate} newCandidate={newCandidate} setNewCandidate={setNewCandidate} removeCandidate={removeCandidate} members={MEMBERS} saveVotes={saveVotes}/>}
       </main>
 
@@ -900,6 +902,127 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
   );
 }
 
+// ─── Money Tab ──────────────────────────────────────────────────
+function MoneyTab({isAdmin}) {
+  const [posts, setPosts] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({title:"", category:"연금", content:"", link:""});
+  const CATEGORIES = ["연금","ETF·펀드","부동산","절세","보험","기타"];
+
+  const addPost = () => {
+    if(!form.title.trim() || !form.content.trim()) return;
+    const newPost = {
+      id: Date.now(),
+      ...form,
+      author: "관리자",
+      createdAt: new Date().toLocaleDateString("ko-KR"),
+    };
+    setPosts(prev => [newPost, ...prev]);
+    setForm({title:"", category:"연금", content:"", link:""});
+    setShowForm(false);
+  };
+
+  const removePost = (id) => setPosts(prev => prev.filter(p => p.id !== id));
+
+  const categoryColors = {
+    "연금": "#6366F1", "ETF·펀드": "#10B981", "부동산": "#F59E0B",
+    "절세": "#EC4899", "보험": "#14B8A6", "기타": "#8B5CF6",
+  };
+
+  return (
+    <div style={styles.contentWrap}>
+      {/* Header */}
+      <div style={{...styles.sectionCard, background:"linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.08))", border:"1px solid rgba(99,102,241,0.2)", marginTop:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
+          <div>
+            <h3 style={{...styles.sectionTitle, margin:0}}>💎 머니머니</h3>
+            <p style={{fontSize:13,color:"rgba(255,255,255,0.45)",marginTop:6}}>연금, 재테크, 절세 등 유용한 금융 정보를 공유해요</p>
+          </div>
+          {isAdmin && (
+            <button style={styles.btnSmallPrimary} onClick={()=>setShowForm(!showForm)}>
+              {showForm ? "취소" : "+ 글 작성"}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Write Form */}
+      {showForm && isAdmin && (
+        <div style={{...styles.sectionCard, marginTop:12}}>
+          <h4 style={{fontSize:15,fontWeight:700,marginBottom:14,color:"rgba(255,255,255,0.8)"}}>새 글 작성</h4>
+          <select value={form.category} onChange={e=>setForm({...form,category:e.target.value})}
+            style={{...styles.selectInput, marginBottom:10, background:"#1a1a2e", color:"#fff"}}>
+            {CATEGORIES.map(c=><option key={c} value={c}>{c}</option>)}
+          </select>
+          <input placeholder="제목" value={form.title} onChange={e=>setForm({...form,title:e.target.value})}
+            style={{...styles.inputSmall, width:"100%", marginBottom:10}}/>
+          <textarea placeholder="내용을 입력하세요..." value={form.content} onChange={e=>setForm({...form,content:e.target.value})}
+            style={{...styles.inputSmall, width:"100%", minHeight:100, resize:"vertical", marginBottom:10}}/>
+          <input placeholder="참고 링크 (선택)" value={form.link} onChange={e=>setForm({...form,link:e.target.value})}
+            style={{...styles.inputSmall, width:"100%", marginBottom:14}}/>
+          <div style={{display:"flex",gap:8}}>
+            <button style={styles.btnSmallPrimary} onClick={addPost}>등록</button>
+            <button style={styles.btnSecondary} onClick={()=>{setShowForm(false);setForm({title:"",category:"연금",content:"",link:""});}}>취소</button>
+          </div>
+        </div>
+      )}
+
+      {/* Category filters */}
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:16}}>
+        {CATEGORIES.map(c=>(
+          <span key={c} style={{padding:"4px 12px",borderRadius:20,fontSize:12,fontWeight:600,cursor:"default",
+            background:`${categoryColors[c]}22`, border:`1px solid ${categoryColors[c]}55`, color:categoryColors[c]}}>
+            {c}
+          </span>
+        ))}
+      </div>
+
+      {/* Posts */}
+      {posts.length === 0 ? (
+        <div style={{...styles.sectionCard, textAlign:"center", padding:"40px 20px", marginTop:16}}>
+          <div style={{fontSize:48, marginBottom:12}}>💡</div>
+          <p style={{color:"rgba(255,255,255,0.4)", fontSize:14}}>아직 공유된 정보가 없습니다</p>
+          <p style={{color:"rgba(255,255,255,0.25)", fontSize:12, marginTop:6}}>연금, 재테크 정보를 함께 나눠봐요!</p>
+        </div>
+      ) : (
+        posts.map(post => (
+          <div key={post.id} style={{...styles.sectionCard, marginTop:12}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:10}}>
+              <div style={{flex:1}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                  <span style={{padding:"2px 10px",borderRadius:12,fontSize:11,fontWeight:700,
+                    background:`${categoryColors[post.category]}22`, border:`1px solid ${categoryColors[post.category]}55`,
+                    color:categoryColors[post.category]}}>
+                    {post.category}
+                  </span>
+                  <span style={{fontSize:11,color:"rgba(255,255,255,0.3)"}}>{post.createdAt}</span>
+                </div>
+                <h4 style={{fontSize:15,fontWeight:700,color:"rgba(255,255,255,0.9)",marginBottom:8}}>{post.title}</h4>
+              </div>
+              {isAdmin && (
+                <button style={{...styles.editBtn,color:"#EF4444",flexShrink:0}} onClick={()=>removePost(post.id)}>🗑️</button>
+              )}
+            </div>
+            <p style={{fontSize:13,color:"rgba(255,255,255,0.6)",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{post.content}</p>
+            {post.link && (
+              <a href={post.link} target="_blank" rel="noopener noreferrer"
+                style={{display:"inline-block",marginTop:10,fontSize:12,color:"#6366F1",textDecoration:"underline"}}>
+                🔗 참고 링크
+              </a>
+            )}
+          </div>
+        ))
+      )}
+
+      {/* Coming soon notice */}
+      <div style={{...styles.sectionCard, marginTop:16, textAlign:"center", padding:"16px 20px",
+        background:"rgba(99,102,241,0.05)", border:"1px dashed rgba(99,102,241,0.2)"}}>
+        <p style={{fontSize:12,color:"rgba(255,255,255,0.3)"}}>🚧 Firebase 연동 예정 · 현재는 임시 로컬 데이터로 동작합니다</p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Vote Tab ───────────────────────────────────────────────────
 function VoteTab({candidates, votes, voterName, setVoterName, handleVote, isAdmin, addCandidate, newCandidate, setNewCandidate, removeCandidate, members, saveVotes}) {
   const voteCounts = {};
@@ -916,7 +1039,7 @@ function VoteTab({candidates, votes, voterName, setVoterName, handleVote, isAdmi
   return (
     <div style={styles.contentWrap}>
       <div style={styles.sectionCard}>
-        <h3 style={styles.sectionTitle}>✈️ 여행지 투표</h3>
+        <h3 style={styles.sectionTitle}>✈️ 여행지 투표 & 정보</h3>
         <p style={styles.voteSubtitle}>1인 1표, 가고 싶은 여행지에 투표해주세요!</p>
 
         {/* Voter select */}
