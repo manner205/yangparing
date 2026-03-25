@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { db, storage } from "./firebase";
-import { collection, doc, onSnapshot, addDoc, deleteDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { collection, doc, onSnapshot, addDoc, deleteDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // ─── Initial Data ───────────────────────────────────────────────
@@ -920,7 +920,12 @@ function MoneyTab({isAdmin}) {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState(EMPTY_FORM);
+  const [editImageFile, setEditImageFile] = useState(null);
+  const [editImagePreview, setEditImagePreview] = useState(null);
   const fileInputRef = useRef(null);
+  const editFileInputRef = useRef(null);
   const CATEGORIES = ["연금","ETF"];
   const categoryColors = { "연금": "#6366F1", "ETF": "#10B981" };
 
@@ -973,6 +978,39 @@ function MoneyTab({isAdmin}) {
 
   const removePost = async (id) => {
     try { await deleteDoc(doc(db, "moneyPosts", id)); } catch(e) { console.error(e); }
+  };
+
+  const startEdit = (post) => {
+    setEditingId(post.id);
+    setEditForm({title:post.title, category:post.category, content:post.content, link:post.link||""});
+    setEditImageFile(null);
+    setEditImagePreview(post.imageUrl || null);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm(EMPTY_FORM);
+    setEditImageFile(null);
+    setEditImagePreview(null);
+    if (editFileInputRef.current) editFileInputRef.current.value = "";
+  };
+
+  const updatePost = async (post) => {
+    if(!editForm.title.trim() || !editForm.content.trim()) return;
+    setUploading(true);
+    try {
+      let imageUrl = post.imageUrl || "";
+      if (editImageFile) {
+        const storageRef = ref(storage, `moneyPosts/${Date.now()}_${editImageFile.name}`);
+        await uploadBytes(storageRef, editImageFile);
+        imageUrl = await getDownloadURL(storageRef);
+      } else if (!editImagePreview) {
+        imageUrl = "";
+      }
+      await updateDoc(doc(db, "moneyPosts", post.id), { ...editForm, imageUrl });
+      cancelEdit();
+    } catch(e) { console.error(e); }
+    finally { setUploading(false); }
   };
 
   return (
@@ -1057,34 +1095,77 @@ function MoneyTab({isAdmin}) {
       ) : (
         posts.map(post => (
           <div key={post.id} style={{...styles.sectionCard, marginTop:12}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:10}}>
-              <div style={{flex:1}}>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                  <span style={{padding:"2px 10px",borderRadius:12,fontSize:11,fontWeight:700,
-                    background:`${categoryColors[post.category]}22`, border:`1px solid ${categoryColors[post.category]}55`,
-                    color:categoryColors[post.category]}}>
-                    {post.category}
-                  </span>
-                  <span style={{fontSize:11,color:"rgba(255,255,255,0.3)"}}>
-                    {post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString("ko-KR") : ""}
-                  </span>
+            {editingId === post.id ? (
+              /* ── 수정 폼 ── */
+              <div>
+                <h4 style={{fontSize:15,fontWeight:700,marginBottom:14,color:"rgba(255,255,255,0.8)"}}>✏️ 글 수정</h4>
+                <select value={editForm.category} onChange={e=>setEditForm({...editForm,category:e.target.value})}
+                  style={{...styles.selectInput, marginBottom:10, background:"#1a1a2e", color:"#fff"}}>
+                  {CATEGORIES.map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+                <input placeholder="제목" value={editForm.title} onChange={e=>setEditForm({...editForm,title:e.target.value})}
+                  style={{...styles.inputSmall, width:"100%", marginBottom:10}}/>
+                <textarea placeholder="내용" value={editForm.content} onChange={e=>setEditForm({...editForm,content:e.target.value})}
+                  style={{...styles.inputSmall, width:"100%", minHeight:100, resize:"vertical", marginBottom:10}}/>
+                <input placeholder="참고 링크 (선택)" value={editForm.link} onChange={e=>setEditForm({...editForm,link:e.target.value})}
+                  style={{...styles.inputSmall, width:"100%", marginBottom:10}}/>
+                <div style={{marginBottom:14}}>
+                  <button style={{...styles.btnSecondary, fontSize:12}} onClick={()=>editFileInputRef.current?.click()}>
+                    🖼️ 이미지 변경 {editImageFile ? `(${editImageFile.name})` : ""}
+                  </button>
+                  <input ref={editFileInputRef} type="file" accept="image/*" style={{display:"none"}}
+                    onChange={e=>{const f=e.target.files[0];if(f){setEditImageFile(f);setEditImagePreview(URL.createObjectURL(f));}}}/>
+                  {editImagePreview && (
+                    <div style={{marginTop:10, position:"relative", display:"inline-block"}}>
+                      <img src={editImagePreview} alt="미리보기" style={{maxWidth:"100%", maxHeight:200, borderRadius:8, objectFit:"cover"}}/>
+                      <button onClick={()=>{setEditImageFile(null);setEditImagePreview(null);if(editFileInputRef.current)editFileInputRef.current.value="";}}
+                        style={{position:"absolute",top:4,right:4,background:"rgba(0,0,0,0.6)",border:"none",color:"#fff",borderRadius:"50%",width:24,height:24,cursor:"pointer",fontSize:14}}>×</button>
+                    </div>
+                  )}
                 </div>
-                <h4 style={{fontSize:15,fontWeight:700,color:"rgba(255,255,255,0.9)",marginBottom:8}}>{post.title}</h4>
+                <div style={{display:"flex",gap:8}}>
+                  <button style={styles.btnSmallPrimary} onClick={()=>updatePost(post)} disabled={uploading}>
+                    {uploading ? "저장 중..." : "저장"}
+                  </button>
+                  <button style={styles.btnSecondary} onClick={cancelEdit}>취소</button>
+                </div>
               </div>
-              {isAdmin && (
-                <button style={{...styles.editBtn,color:"#EF4444",flexShrink:0}} onClick={()=>removePost(post.id)}>🗑️</button>
-              )}
-            </div>
-            <p style={{fontSize:13,color:"rgba(255,255,255,0.6)",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{post.content}</p>
-            {post.imageUrl && (
-              <img src={post.imageUrl} alt="첨부 이미지"
-                style={{marginTop:12, maxWidth:"100%", borderRadius:10, objectFit:"cover", maxHeight:400, display:"block"}}/>
-            )}
-            {post.link && (
-              <a href={post.link} target="_blank" rel="noopener noreferrer"
-                style={{display:"inline-block",marginTop:10,fontSize:12,color:"#6366F1",textDecoration:"underline"}}>
-                🔗 참고 링크
-              </a>
+            ) : (
+              /* ── 보기 모드 ── */
+              <>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:10}}>
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                      <span style={{padding:"2px 10px",borderRadius:12,fontSize:11,fontWeight:700,
+                        background:`${categoryColors[post.category]}22`, border:`1px solid ${categoryColors[post.category]}55`,
+                        color:categoryColors[post.category]}}>
+                        {post.category}
+                      </span>
+                      <span style={{fontSize:11,color:"rgba(255,255,255,0.3)"}}>
+                        {post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString("ko-KR") : ""}
+                      </span>
+                    </div>
+                    <h4 style={{fontSize:15,fontWeight:700,color:"rgba(255,255,255,0.9)",marginBottom:8}}>{post.title}</h4>
+                  </div>
+                  {isAdmin && (
+                    <div style={{display:"flex",gap:6,flexShrink:0}}>
+                      <button style={styles.editBtn} onClick={()=>startEdit(post)}>✏️</button>
+                      <button style={{...styles.editBtn,color:"#EF4444"}} onClick={()=>removePost(post.id)}>🗑️</button>
+                    </div>
+                  )}
+                </div>
+                <p style={{fontSize:13,color:"rgba(255,255,255,0.6)",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{post.content}</p>
+                {post.imageUrl && (
+                  <img src={post.imageUrl} alt="첨부 이미지"
+                    style={{marginTop:12, maxWidth:"100%", borderRadius:10, objectFit:"cover", maxHeight:400, display:"block"}}/>
+                )}
+                {post.link && (
+                  <a href={post.link} target="_blank" rel="noopener noreferrer"
+                    style={{display:"inline-block",marginTop:10,fontSize:12,color:"#6366F1",textDecoration:"underline"}}>
+                    🔗 참고 링크
+                  </a>
+                )}
+              </>
             )}
           </div>
         ))
