@@ -1204,6 +1204,15 @@ function MoneyTab({isAdmin}) {
   );
 }
 
+// ─── Twemoji 이미지 컴포넌트 (Windows 국기 이모지 미지원 대응) ──────
+function EmojiImg({emoji, size=36}) {
+  const toUrl = (em) => {
+    const pts = [...em].map(c=>c.codePointAt(0).toString(16)).join('-');
+    return `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/${pts}.png`;
+  };
+  return <img src={toUrl(emoji)} alt={emoji} style={{width:size,height:size,verticalAlign:'middle',display:'inline-block'}} onError={e=>{e.target.style.display='none';e.target.parentNode.insertAdjacentText('beforeend',emoji);}}/>;
+}
+
 // ─── Trip Board (여행정보 게시판) ────────────────────────────────
 const EMPTY_TRIP_FORM = {title:"", content:"", link:""};
 
@@ -1478,7 +1487,7 @@ function VoteTab({candidates, votes, voterName, setVoterName, handleVote, isAdmi
             return (
               <div key={c.id} style={{...styles.voteCard, border:isMyVote?"2px solid #F59E0B":"2px solid rgba(255,255,255,0.06)", boxShadow:isWinning?"0 0 30px rgba(245,158,11,0.15)":"none"}}>
                 {isWinning && <div style={styles.winBadge}>🏆 1위</div>}
-                <div style={styles.voteEmoji}>{c.emoji}</div>
+                <div style={styles.voteEmoji}><EmojiImg emoji={c.emoji} size={42}/></div>
                 <div style={styles.voteName}>{c.name}</div>
                 <div style={styles.voteDesc}>{c.desc}</div>
                 <div style={styles.voteBarOuter}>
@@ -1506,7 +1515,7 @@ function VoteTab({candidates, votes, voterName, setVoterName, handleVote, isAdmi
             <strong>투표 현황: </strong>
             {Object.entries(votes).map(([name,id])=>{
               const c = candidates.find(x=>x.id===id);
-              return <span key={name} style={styles.voterTag}>{name} → {c?.emoji} {c?.name}</span>;
+              return <span key={name} style={styles.voterTag}>{name} → {c && <EmojiImg emoji={c.emoji} size={14}/>} {c?.name}</span>;
             })}
           </div>
         )}
