@@ -1204,6 +1204,241 @@ function MoneyTab({isAdmin}) {
   );
 }
 
+// ─── Trip Board (여행정보 게시판) ────────────────────────────────
+const EMPTY_TRIP_FORM = {title:"", content:"", link:""};
+
+function TripBoard({members, isAdmin}) {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(EMPTY_TRIP_FORM);
+  const [author, setAuthor] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState(EMPTY_TRIP_FORM);
+  const [editImageFile, setEditImageFile] = useState(null);
+  const [editImagePreview, setEditImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
+  const editFileInputRef = useRef(null);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "tripPosts"), (snap) => {
+      const data = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
+      setPosts(data);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
+  const handlePaste = (setter) => (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          if (setter === "new") { setImageFile(file); setImagePreview(URL.createObjectURL(file)); }
+          else { setEditImageFile(file); setEditImagePreview(URL.createObjectURL(file)); }
+        }
+        break;
+      }
+    }
+  };
+
+  const resetForm = () => {
+    setForm(EMPTY_TRIP_FORM); setImageFile(null); setImagePreview(null); setShowForm(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null); setEditForm(EMPTY_TRIP_FORM); setEditImageFile(null); setEditImagePreview(null);
+    if (editFileInputRef.current) editFileInputRef.current.value = "";
+  };
+
+  const uploadImage = async (file) => {
+    const storageRef = ref(storage, `tripPosts/${Date.now()}_${file.name}`);
+    await uploadBytes(storageRef, file);
+    return await getDownloadURL(storageRef);
+  };
+
+  const addPost = async () => {
+    if (!form.title.trim() || !form.content.trim() || !author) return;
+    setUploading(true);
+    try {
+      const imageUrl = imageFile ? await uploadImage(imageFile) : "";
+      await addDoc(collection(db, "tripPosts"), { ...form, imageUrl, author, createdAt: serverTimestamp() });
+      resetForm();
+    } catch(e) { console.error(e); }
+    finally { setUploading(false); }
+  };
+
+  const updatePost = async (post) => {
+    if (!editForm.title.trim() || !editForm.content.trim()) return;
+    setUploading(true);
+    try {
+      let imageUrl = post.imageUrl || "";
+      if (editImageFile) imageUrl = await uploadImage(editImageFile);
+      else if (!editImagePreview) imageUrl = "";
+      await updateDoc(doc(db, "tripPosts", post.id), { ...editForm, imageUrl });
+      cancelEdit();
+    } catch(e) { console.error(e); }
+    finally { setUploading(false); }
+  };
+
+  const removePost = async (id) => {
+    try { await deleteDoc(doc(db, "tripPosts", id)); } catch(e) { console.error(e); }
+  };
+
+  const startEdit = (post) => {
+    setEditingId(post.id);
+    setEditForm({ title: post.title, content: post.content, link: post.link || "" });
+    setEditImageFile(null);
+    setEditImagePreview(post.imageUrl || null);
+  };
+
+  return (
+    <div style={{marginTop:16}}>
+      {/* Header */}
+      <div style={{...styles.sectionCard, background:"linear-gradient(135deg,rgba(245,158,11,0.1),rgba(251,191,36,0.06))", border:"1px solid rgba(245,158,11,0.2)"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
+          <div>
+            <h3 style={{...styles.sectionTitle, margin:0}}>📝 여행 이야기</h3>
+            <p style={{fontSize:13,color:"rgba(255,255,255,0.45)",marginTop:6}}>여행 정보, 후기, 계획을 자유롭게 공유해요</p>
+          </div>
+          <button style={styles.btnSmallPrimary} onClick={()=>setShowForm(!showForm)}>
+            {showForm ? "취소" : "+ 글 작성"}
+          </button>
+        </div>
+      </div>
+
+      {/* Write Form */}
+      {showForm && (
+        <div style={{...styles.sectionCard, marginTop:12}}>
+          <h4 style={{fontSize:15,fontWeight:700,marginBottom:14,color:"rgba(255,255,255,0.8)"}}>새 글 작성</h4>
+          <select value={author} onChange={e=>setAuthor(e.target.value)}
+            style={{...styles.selectInput, marginBottom:10, background:"#1a1a2e", color: author ? "#fff" : "rgba(255,255,255,0.4)"}}>
+            <option value="">작성자 이름 선택</option>
+            {members.map(m=><option key={m} value={m}>{m}</option>)}
+          </select>
+          <input placeholder="제목" value={form.title} onChange={e=>setForm({...form,title:e.target.value})}
+            style={{...styles.inputSmall, width:"100%", marginBottom:10}}/>
+          <textarea placeholder="내용을 입력하세요... (이미지 Ctrl+V 붙여넣기 가능)" value={form.content}
+            onChange={e=>setForm({...form,content:e.target.value})} onPaste={handlePaste("new")}
+            style={{...styles.inputSmall, width:"100%", minHeight:100, resize:"vertical", marginBottom:10}}/>
+          <input placeholder="참고 링크 (선택)" value={form.link} onChange={e=>setForm({...form,link:e.target.value})}
+            style={{...styles.inputSmall, width:"100%", marginBottom:10}}/>
+          <div style={{marginBottom:14}}>
+            <button style={{...styles.btnSecondary, fontSize:12}} onClick={()=>fileInputRef.current?.click()}>
+              🖼️ 이미지 첨부 {imageFile ? `(${imageFile.name})` : "(선택)"}
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" style={{display:"none"}}
+              onChange={e=>{const f=e.target.files[0];if(f){setImageFile(f);setImagePreview(URL.createObjectURL(f));}}}/>
+            {imagePreview && (
+              <div style={{marginTop:10,position:"relative",display:"inline-block"}}>
+                <img src={imagePreview} alt="미리보기" style={{maxWidth:"100%",maxHeight:200,borderRadius:8,objectFit:"cover"}}/>
+                <button onClick={()=>{setImageFile(null);setImagePreview(null);if(fileInputRef.current)fileInputRef.current.value="";}}
+                  style={{position:"absolute",top:4,right:4,background:"rgba(0,0,0,0.6)",border:"none",color:"#fff",borderRadius:"50%",width:24,height:24,cursor:"pointer",fontSize:14}}>×</button>
+              </div>
+            )}
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <button style={styles.btnSmallPrimary} onClick={addPost} disabled={uploading || !author}>
+              {uploading ? "업로드 중..." : "등록"}
+            </button>
+            <button style={styles.btnSecondary} onClick={resetForm}>취소</button>
+          </div>
+        </div>
+      )}
+
+      {/* Posts */}
+      {loading ? (
+        <div style={{...styles.sectionCard,textAlign:"center",padding:"40px 20px",marginTop:12}}>
+          <p style={{color:"rgba(255,255,255,0.4)",fontSize:14}}>불러오는 중...</p>
+        </div>
+      ) : posts.length === 0 ? (
+        <div style={{...styles.sectionCard,textAlign:"center",padding:"40px 20px",marginTop:12}}>
+          <div style={{fontSize:48,marginBottom:12}}>✈️</div>
+          <p style={{color:"rgba(255,255,255,0.4)",fontSize:14}}>아직 공유된 여행 이야기가 없어요</p>
+          <p style={{color:"rgba(255,255,255,0.25)",fontSize:12,marginTop:6}}>여행 정보, 후기를 함께 나눠봐요!</p>
+        </div>
+      ) : posts.map(post => (
+        <div key={post.id} style={{...styles.sectionCard, marginTop:12}}>
+          {editingId === post.id ? (
+            <div>
+              <h4 style={{fontSize:15,fontWeight:700,marginBottom:14,color:"rgba(255,255,255,0.8)"}}>✏️ 글 수정</h4>
+              <input placeholder="제목" value={editForm.title} onChange={e=>setEditForm({...editForm,title:e.target.value})}
+                style={{...styles.inputSmall, width:"100%", marginBottom:10}}/>
+              <textarea placeholder="내용 (이미지 Ctrl+V 붙여넣기 가능)" value={editForm.content}
+                onChange={e=>setEditForm({...editForm,content:e.target.value})} onPaste={handlePaste("edit")}
+                style={{...styles.inputSmall, width:"100%", minHeight:100, resize:"vertical", marginBottom:10}}/>
+              <input placeholder="참고 링크 (선택)" value={editForm.link} onChange={e=>setEditForm({...editForm,link:e.target.value})}
+                style={{...styles.inputSmall, width:"100%", marginBottom:10}}/>
+              <div style={{marginBottom:14}}>
+                <button style={{...styles.btnSecondary,fontSize:12}} onClick={()=>editFileInputRef.current?.click()}>
+                  🖼️ 이미지 변경 {editImageFile ? `(${editImageFile.name})` : ""}
+                </button>
+                <input ref={editFileInputRef} type="file" accept="image/*" style={{display:"none"}}
+                  onChange={e=>{const f=e.target.files[0];if(f){setEditImageFile(f);setEditImagePreview(URL.createObjectURL(f));}}}/>
+                {editImagePreview && (
+                  <div style={{marginTop:10,position:"relative",display:"inline-block"}}>
+                    <img src={editImagePreview} alt="미리보기" style={{maxWidth:"100%",maxHeight:200,borderRadius:8,objectFit:"cover"}}/>
+                    <button onClick={()=>{setEditImageFile(null);setEditImagePreview(null);if(editFileInputRef.current)editFileInputRef.current.value="";}}
+                      style={{position:"absolute",top:4,right:4,background:"rgba(0,0,0,0.6)",border:"none",color:"#fff",borderRadius:"50%",width:24,height:24,cursor:"pointer",fontSize:14}}>×</button>
+                  </div>
+                )}
+              </div>
+              <div style={{display:"flex",gap:8}}>
+                <button style={styles.btnSmallPrimary} onClick={()=>updatePost(post)} disabled={uploading}>
+                  {uploading ? "저장 중..." : "저장"}
+                </button>
+                <button style={styles.btnSecondary} onClick={cancelEdit}>취소</button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:10}}>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                    <span style={{padding:"2px 10px",borderRadius:12,fontSize:11,fontWeight:700,
+                      background:"rgba(245,158,11,0.15)",border:"1px solid rgba(245,158,11,0.3)",color:"#F59E0B"}}>
+                      {post.author}
+                    </span>
+                    <span style={{fontSize:11,color:"rgba(255,255,255,0.3)"}}>
+                      {post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString("ko-KR") : ""}
+                    </span>
+                  </div>
+                  <h4 style={{fontSize:15,fontWeight:700,color:"rgba(255,255,255,0.9)",marginBottom:8}}>{post.title}</h4>
+                </div>
+                {isAdmin && (
+                  <div style={{display:"flex",gap:6,flexShrink:0}}>
+                    <button style={styles.editBtn} onClick={()=>startEdit(post)}>✏️</button>
+                    <button style={{...styles.editBtn,color:"#EF4444"}} onClick={()=>removePost(post.id)}>🗑️</button>
+                  </div>
+                )}
+              </div>
+              <p style={{fontSize:13,color:"rgba(255,255,255,0.6)",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{post.content}</p>
+              {post.imageUrl && (
+                <img src={post.imageUrl} alt="첨부 이미지"
+                  style={{marginTop:12,maxWidth:"100%",borderRadius:10,objectFit:"cover",maxHeight:400,display:"block"}}/>
+              )}
+              {post.link && (
+                <a href={post.link} target="_blank" rel="noopener noreferrer"
+                  style={{display:"inline-block",marginTop:10,fontSize:12,color:"#F59E0B",textDecoration:"underline"}}>
+                  🔗 참고 링크
+                </a>
+              )}
+            </>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Vote Tab ───────────────────────────────────────────────────
 function VoteTab({candidates, votes, voterName, setVoterName, handleVote, isAdmin, addCandidate, newCandidate, setNewCandidate, removeCandidate, members, saveVotes}) {
   const voteCounts = {};
@@ -1290,6 +1525,9 @@ function VoteTab({candidates, votes, voterName, setVoterName, handleVote, isAdmi
           <button style={{...styles.btnSmallDanger,marginTop:12}} onClick={resetVotes}>투표 초기화</button>
         </div>
       )}
+
+      {/* Trip bulletin board */}
+      <TripBoard members={members} isAdmin={isAdmin} />
     </div>
   );
 }
