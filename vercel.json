@@ -1,0 +1,14 @@
+{
+  "rewrites": [
+    {
+      "source": "/naver-finance/:path*",
+      "destination": "https://m.stock.naver.com/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist"
+}

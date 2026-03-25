@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep:*)",
+      "Bash(curl -sL \"https://docs.google.com/spreadsheets/d/1-6BbzuG1RR10IU8X3U9daL5N5UuvNzTnpAO-5avcKXY/export?format=csv&gid=0\")"
+    ]
+  }
+}
