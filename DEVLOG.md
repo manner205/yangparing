@@ -50,8 +50,35 @@
 
 ---
 
+## 2026-03-25 (3차 작업)
+
+### Firebase 연동 완료
+- Firebase 프로젝트 생성 (yangparing-d0a57)
+- Firestore Database 생성 (서울 리전, 테스트 모드)
+- Firebase Storage 생성 (Blaze 플랜 업그레이드)
+- Firebase SDK 설치 및 `src/firebase.js` 설정 파일 생성
+
+### 보안 처리
+- API 키를 `.env` 파일로 분리 (GitHub 노출 방지)
+- `.gitignore`에 `.env` 추가
+- Vercel 환경변수에 7개 키 등록
+
+### 머니머니 탭 Firestore 연동
+- 글 작성 → Firestore `moneyPosts` 컬렉션에 저장
+- 실시간 리스너(`onSnapshot`)로 자동 동기화
+- 글 수정 기능 추가 (✏️ 버튼 → 인라인 수정 폼)
+- 글 삭제 기능 (🗑️ 버튼)
+- 이미지 첨부 기능 (Firebase Storage 업로드 → URL 저장)
+- 수정 시 이미지 교체·삭제 가능
+
+### 여행정보 탭 Firestore 연동
+- 여행지 후보·투표 데이터 → Firestore `trip/voteData` 문서에 저장
+- 실시간 리스너로 자동 동기화
+- localStorage 방식 완전 제거
+
+---
+
 ## 향후 개발 예정
 
-- [ ] Firebase 프로젝트 생성 및 SDK 설치
-- [ ] Firestore 연동: 머니머니 글 저장·조회·삭제 (실시간 공유)
-- [ ] Firestore 연동: 여행정보 탭 — 여행지 후보·투표 데이터 (실시간 공유)
+- [ ] 여행정보 탭 상세 기능 보완
+- [ ] Firestore 보안 규칙 강화 (현재 테스트 모드)

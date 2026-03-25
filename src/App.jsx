@@ -948,6 +948,36 @@ function MoneyTab({isAdmin}) {
     setImagePreview(URL.createObjectURL(file));
   };
 
+  const handlePaste = (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          setImageFile(file);
+          setImagePreview(URL.createObjectURL(file));
+        }
+        break;
+      }
+    }
+  };
+
+  const handleEditPaste = (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          setEditImageFile(file);
+          setEditImagePreview(URL.createObjectURL(file));
+        }
+        break;
+      }
+    }
+  };
+
   const resetForm = () => {
     setForm(EMPTY_FORM);
     setImageFile(null);
@@ -1040,7 +1070,7 @@ function MoneyTab({isAdmin}) {
           </select>
           <input placeholder="제목" value={form.title} onChange={e=>setForm({...form,title:e.target.value})}
             style={{...styles.inputSmall, width:"100%", marginBottom:10}}/>
-          <textarea placeholder="내용을 입력하세요..." value={form.content} onChange={e=>setForm({...form,content:e.target.value})}
+          <textarea placeholder="내용을 입력하세요... (이미지 Ctrl+V 붙여넣기 가능)" value={form.content} onChange={e=>setForm({...form,content:e.target.value})} onPaste={handlePaste}
             style={{...styles.inputSmall, width:"100%", minHeight:100, resize:"vertical", marginBottom:10}}/>
           <input placeholder="참고 링크 (선택)" value={form.link} onChange={e=>setForm({...form,link:e.target.value})}
             style={{...styles.inputSmall, width:"100%", marginBottom:10}}/>
@@ -1105,7 +1135,7 @@ function MoneyTab({isAdmin}) {
                 </select>
                 <input placeholder="제목" value={editForm.title} onChange={e=>setEditForm({...editForm,title:e.target.value})}
                   style={{...styles.inputSmall, width:"100%", marginBottom:10}}/>
-                <textarea placeholder="내용" value={editForm.content} onChange={e=>setEditForm({...editForm,content:e.target.value})}
+                <textarea placeholder="내용 (이미지 Ctrl+V 붙여넣기 가능)" value={editForm.content} onChange={e=>setEditForm({...editForm,content:e.target.value})} onPaste={handleEditPaste}
                   style={{...styles.inputSmall, width:"100%", minHeight:100, resize:"vertical", marginBottom:10}}/>
                 <input placeholder="참고 링크 (선택)" value={editForm.link} onChange={e=>setEditForm({...editForm,link:e.target.value})}
                   style={{...styles.inputSmall, width:"100%", marginBottom:10}}/>
