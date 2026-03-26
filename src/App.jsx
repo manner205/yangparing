@@ -777,11 +777,33 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
     );
   }
 
+  const antMsg = parseFloat(stockReturn) > 20 ? "팔아?! 🤑"
+    : parseFloat(stockReturn) > 0 ? "더 사여?! 😤"
+    : parseFloat(stockReturn) < 0 ? "물타여?! 😭"
+    : "사여?! 🤔";
+
   return (
     <div style={styles.contentWrap}>
       {/* Stock Summary */}
-      <div style={styles.investHero}>
+      <div style={{...styles.investHero, position:"relative", overflow:"visible"}}>
         <h3 style={styles.investTitle}>📈 주식 투자 현황</h3>
+        {/* 개미 마스코트 */}
+        <div style={{position:"absolute", bottom:-18, right:12, display:"flex", flexDirection:"column", alignItems:"center", zIndex:10}}>
+          <div style={{
+            background:"#fff", color:"#222", fontSize:12, fontWeight:700,
+            padding:"4px 10px", borderRadius:12, border:"2px solid #333",
+            boxShadow:"2px 2px 0 #333", marginBottom:4, whiteSpace:"nowrap",
+            position:"relative"
+          }}>
+            {antMsg}
+            <span style={{
+              position:"absolute", bottom:-7, left:"50%", transform:"translateX(-50%)",
+              width:0, height:0, borderLeft:"6px solid transparent",
+              borderRight:"6px solid transparent", borderTop:"7px solid #333"
+            }}/>
+          </div>
+          <img src="/ant.jpg" alt="개미" style={{width:52, height:52, objectFit:"contain"}} />
+        </div>
         <div style={styles.investRow}>
           <div style={styles.investStat}>
             <span style={styles.investLabel}>총 투자금</span>
