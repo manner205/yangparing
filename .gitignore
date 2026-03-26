@@ -29,3 +29,7 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+
+# Windows thumbnail cache
+Thumbs.db
+*/Thumbs.db

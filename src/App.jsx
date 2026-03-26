@@ -11,20 +11,7 @@ const ACCESS_CODE = "1819";
 const ADMIN_ID = "manner205";
 const ADMIN_PW = "!2Dldudgh";
 
-const INITIAL_PAYMENTS = (() => {
-  const p = {};
-  MEMBERS.forEach(m => { p[m] = Array(TOTAL_ROUNDS).fill(false); });
-  // Rounds 1-4: all paid
-  MEMBERS.forEach(m => { for(let i=0;i<4;i++) p[m][i]=true; });
-  // Round 5: all except 변영선
-  MEMBERS.forEach(m => { if(m!=="변영선") p[m][4]=true; });
-  // Round 6
-  ["전진아","홍대우","이상민","오지선","이지은","배정아"].forEach(m => p[m][5]=true);
-  // Rounds 7-38 for 홍대우,오지선,배정아
-  ["홍대우","오지선"].forEach(m => { for(let i=6;i<TOTAL_ROUNDS;i++) p[m][i]=true; });
-  ["배정아"].forEach(m => { for(let i=6;i<19;i++) p[m][i]=true; });
-  return p;
-})();
+// 하드코딩 데이터 제거 — Google Sheets 데이터만 사용
 
 const ROUND_LABELS = Array.from({length:TOTAL_ROUNDS},(_,i)=>{
   const startYear=25, startMonth=11;
@@ -34,18 +21,7 @@ const ROUND_LABELS = Array.from({length:TOTAL_ROUNDS},(_,i)=>{
   return `'${String(y).padStart(2,'0')}.${String(mo).padStart(2,'0')}`;
 });
 
-const INITIAL_STOCKS = [
-  {id:1,name:"KODEX200",code:"069500",price:81025,qty:8},
-  {id:2,name:"PLUS 고배당주",code:"161510",price:25240,qty:25},
-  {id:3,name:"KODEX AI반도체",code:"395160",price:26815,qty:13},
-  {id:4,name:"삼성전자",code:"005930",price:186300,qty:4},
-];
-const INITIAL_CASH = 24285;
 
-const INITIAL_DEPOSITS = [
-  {id:1, name:"국민은행 정기예금", startDate:"26.01.27", endDate:"27.01.27",
-   amount:1000000, rate:2.80, maturityAmount:1023690}
-];
 
 const COUNTRY_FLAG_MAP = [
   {keywords:["일본","오사카","도쿄","교토","후쿠오카","삿포로","나고야","오키나와"], emoji:"🇯🇵"},
@@ -142,7 +118,7 @@ function parseInvestCSV(csv) {
     const row = rows[i];
     if (row[1] === '종목명' && row[2] === '신규일') { inDeposit = true; continue; }
     if (row[1] === '예수금') {
-      cash = parseInt(String(row[4]).replace(/[₩,]/g, '')) || 0;
+      cash = parseInt(String(row[5]).replace(/[₩,]/g, '')) || 0;
       continue;
     }
     if (!inDeposit) {
@@ -194,10 +170,11 @@ export default function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Data states
-  const [payments, setPayments] = useState(INITIAL_PAYMENTS);
-  const [stocks, setStocks] = useState(INITIAL_STOCKS);
-  const [cashBalance, setCashBalance] = useState(INITIAL_CASH);
-  const [deposits, setDeposits] = useState(INITIAL_DEPOSITS);
+  const [payments, setPayments] = useState(null);
+  const [stocks, setStocks] = useState(null);
+  const [cashBalance, setCashBalance] = useState(0);
+  const [deposits, setDeposits] = useState(null);
+  const [sheetError, setSheetError] = useState(false);
   const [candidates, setCandidates] = useState(INITIAL_CANDIDATES);
   const [votes, setVotes] = useState({});
   const [voterName, setVoterName] = useState("");
@@ -208,6 +185,7 @@ export default function App() {
 
   const loadSheetData = useCallback(() => {
     setIsRefreshing(true);
+    setSheetError(false);
     const base = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=`;
     Promise.all([
       fetch(base + SHEET_PAYMENTS_GID).then(r => r.text()),
@@ -218,7 +196,8 @@ export default function App() {
       setStocks(stocks);
       setCashBalance(cash);
       setDeposits(deposits);
-    }).catch(() => {}).finally(() => setIsRefreshing(false));
+      setSheetError(false);
+    }).catch(() => { setSheetError(true); }).finally(() => setIsRefreshing(false));
   }, []);
 
   // Load from Google Sheets on mount
@@ -242,8 +221,9 @@ export default function App() {
   useEffect(() => {
     const refresh = async () => {
       const curr = stocksRef.current;
-      if (!curr.length) return;
+      if (!curr || !curr.length) return;
       const updated = await Promise.all(curr.map(async s => {
+        if (!s.code) return s;
         try {
           const info = await fetchStockInfo(s.code);
           return { ...s, price: info.price };
@@ -315,18 +295,18 @@ export default function App() {
   }
 
   // ─── Computed Values ──────────────────────────────────────────
-  const totalCollected = Object.values(payments).reduce((sum,arr)=>sum+arr.filter(Boolean).length*PER_ROUND,0);
-  const stockTotal = stocks.reduce((s,st)=>s+st.price*st.qty,0)+cashBalance;
+  const totalCollected = payments ? Object.values(payments).reduce((sum,arr)=>sum+arr.filter(Boolean).length*PER_ROUND,0) : 0;
+  const stockTotal = stocks ? stocks.reduce((s,st)=>s+st.price*st.qty,0)+cashBalance : 0;
   const stockInvested = 1800000;
   const stockProfit = stockTotal - stockInvested;
   const stockReturn = stockInvested > 0 ? ((stockProfit/stockInvested)*100).toFixed(2) : "0";
-  const depositTotal = deposits.reduce((s,d)=>s+d.maturityAmount,0);
-  const tossBalance = totalCollected - stockInvested - deposits.reduce((s,d)=>s+d.amount,0);
+  const depositTotal = deposits ? deposits.reduce((s,d)=>s+d.maturityAmount,0) : 0;
+  const tossBalance = totalCollected - stockInvested - (deposits ? deposits.reduce((s,d)=>s+d.amount,0) : 0);
   const currentProgress = 5;
   const progressPct = ((currentProgress/TOTAL_ROUNDS)*100).toFixed(1);
 
   const togglePayment = (member, round) => {
-    if(!isAdmin) return;
+    if(!isAdmin || !payments) return;
     const next = {...payments, [member]: [...payments[member]]};
     next[member][round] = !next[member][round];
     savePayments(next);
@@ -484,8 +464,8 @@ export default function App() {
         }}
       >
         {activeTab==="home" && <HomeTab totalCollected={totalCollected} stockTotal={stockTotal} depositTotal={depositTotal} tossBalance={tossBalance} progressPct={progressPct} currentProgress={currentProgress} members={MEMBERS} payments={payments} setActiveTab={setActiveTab} />}
-        {activeTab==="payments" && <PaymentsTab payments={payments} isAdmin={isAdmin} togglePayment={togglePayment} />}
-        {activeTab==="invest" && <InvestTab stocks={stocks} cashBalance={cashBalance} deposits={deposits} isAdmin={isAdmin} stockTotal={stockTotal} stockInvested={stockInvested} stockProfit={stockProfit} stockReturn={stockReturn} editingStock={editingStock} setEditingStock={setEditingStock} saveStockEdit={saveStockEdit} removeStock={removeStock} showNewStock={showNewStock} setShowNewStock={setShowNewStock} newStock={newStock} setNewStock={setNewStock} addStock={addStock} saveStocks={saveStocks} saveDeposits={saveDeposits} />}
+        {activeTab==="payments" && <PaymentsTab payments={payments} isAdmin={isAdmin} togglePayment={togglePayment} sheetError={sheetError} isRefreshing={isRefreshing} loadSheetData={loadSheetData} />}
+        {activeTab==="invest" && <InvestTab stocks={stocks} cashBalance={cashBalance} deposits={deposits} isAdmin={isAdmin} stockTotal={stockTotal} stockInvested={stockInvested} stockProfit={stockProfit} stockReturn={stockReturn} editingStock={editingStock} setEditingStock={setEditingStock} saveStockEdit={saveStockEdit} removeStock={removeStock} showNewStock={showNewStock} setShowNewStock={setShowNewStock} newStock={newStock} setNewStock={setNewStock} addStock={addStock} saveStocks={saveStocks} saveDeposits={saveDeposits} sheetError={sheetError} isRefreshing={isRefreshing} loadSheetData={loadSheetData} />}
         {activeTab==="money" && <MoneyTab isAdmin={isAdmin} />}
         {activeTab==="vote" && <VoteTab candidates={candidates} votes={votes} voterName={voterName} setVoterName={setVoterName} handleVote={handleVote} isAdmin={isAdmin} addCandidate={addCandidate} newCandidate={newCandidate} setNewCandidate={setNewCandidate} removeCandidate={removeCandidate} members={MEMBERS} saveVotes={saveVotes}/>}
       </main>
@@ -502,7 +482,7 @@ export default function App() {
 function HomeTab({totalCollected, stockTotal, depositTotal, tossBalance, progressPct, currentProgress, members, payments, setActiveTab}) {
   const totalTarget = MEMBERS.length * TOTAL_ROUNDS * PER_ROUND;
   const totalEval = stockTotal + depositTotal + tossBalance;
-  const memberStats = members.map(m=>({name:m, paid:payments[m].filter(Boolean).length}));
+  const memberStats = members.map(m=>({name:m, paid: payments ? (payments[m]?.filter(Boolean).length ?? 0) : 0}));
   const isMobile = window.innerWidth < 600;
   const evalColor = totalEval > totalCollected ? "#F87171" : totalEval < totalCollected ? "#60A5FA" : "rgba(255,255,255,0.5)";
 
@@ -638,11 +618,27 @@ function HomeTab({totalCollected, stockTotal, depositTotal, tossBalance, progres
 }
 
 // ─── Payments Tab ───────────────────────────────────────────────
-function PaymentsTab({payments, isAdmin, togglePayment}) {
+function PaymentsTab({payments, isAdmin, togglePayment, sheetError, isRefreshing, loadSheetData}) {
   const [selectedMember, setSelectedMember] = useState(null);
   const now = new Date();
   const currentLabel = `'${String(now.getFullYear()%100).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}`;
   const isMobile = window.innerWidth < 600;
+
+  if (!payments) {
+    return (
+      <div style={styles.contentWrap}>
+        <div style={{...styles.sectionCard, textAlign:"center", padding:"60px 20px"}}>
+          {isRefreshing ? (
+            <><div style={{fontSize:36,marginBottom:16}}>⏳</div><p style={{color:"rgba(255,255,255,0.7)",fontSize:15}}>Google 워크시트에서 데이터를 불러오는 중...</p></>
+          ) : sheetError ? (
+            <><div style={{fontSize:36,marginBottom:16}}>🔒</div><p style={{color:"rgba(255,255,255,0.7)",fontSize:15,lineHeight:1.6}}>Google 워크시트에 연결할 수 없습니다.<br/>네트워크 환경(회사 보안 등)에 따라 접근이 제한될 수 있습니다.</p><button onClick={loadSheetData} style={{marginTop:16,padding:"10px 24px",borderRadius:8,border:"1px solid rgba(255,255,255,0.2)",background:"rgba(255,255,255,0.1)",color:"#fff",cursor:"pointer",fontSize:14}}>다시 시도</button></>
+          ) : (
+            <><div style={{fontSize:36,marginBottom:16}}>⏳</div><p style={{color:"rgba(255,255,255,0.7)",fontSize:15}}>데이터를 불러오는 중...</p></>
+          )}
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div style={styles.contentWrap}>
@@ -733,7 +729,7 @@ function PaymentsTab({payments, isAdmin, togglePayment}) {
 // ─── Invest Tab ─────────────────────────────────────────────────
 const EMPTY_DEP = {name:"",startDate:"",endDate:"",amount:"",rate:"",maturityAmount:""};
 
-function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInvested, stockProfit, stockReturn, editingStock, setEditingStock, saveStockEdit, removeStock, showNewStock, setShowNewStock, newStock, setNewStock, addStock, saveStocks, saveDeposits}) {
+function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInvested, stockProfit, stockReturn, editingStock, setEditingStock, saveStockEdit, removeStock, showNewStock, setShowNewStock, newStock, setNewStock, addStock, saveStocks, saveDeposits, sheetError, isRefreshing, loadSheetData}) {
   const [editingDepId, setEditingDepId] = useState(null);
   const [depForm, setDepForm] = useState(EMPTY_DEP);
   const [showNewDep, setShowNewDep] = useState(false);
@@ -757,6 +753,22 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
       setLookupError("종목을 찾을 수 없습니다. 종목코드를 확인해주세요.");
     } finally { setLookupLoading(false); }
   };
+
+  if (!stocks || !deposits) {
+    return (
+      <div style={styles.contentWrap}>
+        <div style={{...styles.sectionCard, textAlign:"center", padding:"60px 20px"}}>
+          {isRefreshing ? (
+            <><div style={{fontSize:36,marginBottom:16}}>⏳</div><p style={{color:"rgba(255,255,255,0.7)",fontSize:15}}>Google 워크시트에서 데이터를 불러오는 중...</p></>
+          ) : sheetError ? (
+            <><div style={{fontSize:36,marginBottom:16}}>🔒</div><p style={{color:"rgba(255,255,255,0.7)",fontSize:15,lineHeight:1.6}}>Google 워크시트에 연결할 수 없습니다.<br/>네트워크 환경(회사 보안 등)에 따라 접근이 제한될 수 있습니다.</p><button onClick={loadSheetData} style={{marginTop:16,padding:"10px 24px",borderRadius:8,border:"1px solid rgba(255,255,255,0.2)",background:"rgba(255,255,255,0.1)",color:"#fff",cursor:"pointer",fontSize:14}}>다시 시도</button></>
+          ) : (
+            <><div style={{fontSize:36,marginBottom:16}}>⏳</div><p style={{color:"rgba(255,255,255,0.7)",fontSize:15}}>데이터를 불러오는 중...</p></>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.contentWrap}>
@@ -1317,8 +1329,12 @@ function TripBoard({members, isAdmin}) {
     return await getDownloadURL(storageRef);
   };
 
+  const [authorError, setAuthorError] = useState(false);
+
   const addPost = async () => {
-    if (!form.title.trim() || !form.content.trim() || !author) return;
+    if (!author) { setAuthorError(true); return; }
+    setAuthorError(false);
+    if (!form.title.trim() || !form.content.trim()) return;
     setUploading(true);
     try {
       const imageUrl = imageFile ? await uploadImage(imageFile) : "";
@@ -1371,11 +1387,12 @@ function TripBoard({members, isAdmin}) {
       {showForm && (
         <div style={{...styles.sectionCard, marginTop:12}}>
           <h4 style={{fontSize:15,fontWeight:700,marginBottom:14,color:"rgba(255,255,255,0.8)"}}>새 글 작성</h4>
-          <select value={author} onChange={e=>setAuthor(e.target.value)}
-            style={{...styles.selectInput, marginBottom:10, background:"#1a1a2e", color: author ? "#fff" : "rgba(255,255,255,0.4)"}}>
+          <select value={author} onChange={e=>{setAuthor(e.target.value);setAuthorError(false);}}
+            style={{...styles.selectInput, marginBottom: authorError ? 4 : 10, background:"#1a1a2e", color: author ? "#fff" : "rgba(255,255,255,0.4)", borderColor: authorError ? "#EF4444" : undefined}}>
             <option value="">작성자 이름 선택</option>
             {members.map(m=><option key={m} value={m}>{m}</option>)}
           </select>
+          {authorError && <p style={{margin:"0 0 10px",fontSize:12,color:"#EF4444"}}>✋ 이름을 선택해주세요</p>}
           <input placeholder="제목" value={form.title} onChange={e=>setForm({...form,title:e.target.value})}
             style={{...styles.inputSmall, width:"100%", marginBottom:10}}/>
           <textarea placeholder="내용을 입력하세요... (이미지 Ctrl+V 붙여넣기 가능)" value={form.content}
@@ -1465,7 +1482,7 @@ function TripBoard({members, isAdmin}) {
                   </div>
                   <h4 style={{fontSize:15,fontWeight:700,color:"rgba(255,255,255,0.9)",marginBottom:8}}>{post.title}</h4>
                 </div>
-                {isAdmin && (
+                {(isAdmin || post.author === author) && (
                   <div style={{display:"flex",gap:6,flexShrink:0}}>
                     <button style={styles.editBtn} onClick={()=>startEdit(post)}>✏️</button>
                     <button style={{...styles.editBtn,color:"#EF4444"}} onClick={()=>removePost(post.id)}>🗑️</button>
