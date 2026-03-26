@@ -110,10 +110,15 @@ function parseInvestCSV(csv) {
   const rows = csv.split('\n').map(parseCSVRow);
   const stocks = [];
   let cash = 0;
+  let totalInputAmount = 0;
   const deposits = [];
   let inDeposit = false;
   let stockId = 1;
   let depositId = 1;
+  // 시트 3행(index 2): 총 입금액은 C열(index 2)
+  if (rows[2] && rows[2][2]) {
+    totalInputAmount = parseInt(String(rows[2][2]).replace(/[₩,\s]/g, '')) || 0;
+  }
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     if (row[1] === '종목명' && row[2] === '신규일') { inDeposit = true; continue; }
@@ -138,7 +143,7 @@ function parseInvestCSV(csv) {
       }
     }
   }
-  return { stocks, cash, deposits };
+  return { stocks, cash, deposits, totalInputAmount };
 }
 
 // ─── Utility ────────────────────────────────────────────────────
@@ -174,6 +179,7 @@ export default function App() {
   const [stocks, setStocks] = useState(null);
   const [cashBalance, setCashBalance] = useState(0);
   const [deposits, setDeposits] = useState(null);
+  const [stockInputAmount, setStockInputAmount] = useState(0);
   const [sheetError, setSheetError] = useState(false);
   const [candidates, setCandidates] = useState(INITIAL_CANDIDATES);
   const [votes, setVotes] = useState({});
@@ -192,10 +198,11 @@ export default function App() {
       fetch(base + SHEET_INVEST_GID).then(r => r.text()),
     ]).then(([payCSV, investCSV]) => {
       setPayments(parsePaymentsCSV(payCSV));
-      const { stocks, cash, deposits } = parseInvestCSV(investCSV);
+      const { stocks, cash, deposits, totalInputAmount } = parseInvestCSV(investCSV);
       setStocks(stocks);
       setCashBalance(cash);
       setDeposits(deposits);
+      setStockInputAmount(totalInputAmount);
       setSheetError(false);
     }).catch(() => { setSheetError(true); }).finally(() => setIsRefreshing(false));
   }, []);
@@ -297,7 +304,7 @@ export default function App() {
   // ─── Computed Values ──────────────────────────────────────────
   const totalCollected = payments ? Object.values(payments).reduce((sum,arr)=>sum+arr.filter(Boolean).length*PER_ROUND,0) : 0;
   const stockTotal = stocks ? stocks.reduce((s,st)=>s+st.price*st.qty,0)+cashBalance : 0;
-  const stockInvested = 1800000;
+  const stockInvested = stockInputAmount;
   const stockProfit = stockTotal - stockInvested;
   const stockReturn = stockInvested > 0 ? ((stockProfit/stockInvested)*100).toFixed(2) : "0";
   const depositTotal = deposits ? deposits.reduce((s,d)=>s+d.maturityAmount,0) : 0;
