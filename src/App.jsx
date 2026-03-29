@@ -189,23 +189,45 @@ export default function App() {
   const [showNewStock, setShowNewStock] = useState(false);
   const [newCandidate, setNewCandidate] = useState({name:"",desc:"",emoji:"🌍"});
 
-  const loadSheetData = useCallback(() => {
+  const loadSheetData = useCallback(async () => {
     setIsRefreshing(true);
     setSheetError(false);
     const base = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=`;
-    const ts = Date.now();
-    Promise.all([
-      fetch(`${base}${SHEET_PAYMENTS_GID}&t=${ts}`, { cache: 'no-store' }).then(r => r.text()),
-      fetch(`${base}${SHEET_INVEST_GID}&t=${ts}`, { cache: 'no-store' }).then(r => r.text()),
-    ]).then(([payCSV, investCSV]) => {
-      setPayments(parsePaymentsCSV(payCSV));
-      const { stocks, cash, deposits, totalInputAmount } = parseInvestCSV(investCSV);
-      setStocks(stocks);
-      setCashBalance(cash);
-      setDeposits(deposits);
-      setStockInputAmount(totalInputAmount);
-      setSheetError(false);
-    }).catch(() => { setSheetError(true); }).finally(() => setIsRefreshing(false));
+
+    const fetchWithTimeout = (url, timeoutMs = 8000) => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      return fetch(url, { cache: 'no-store', signal: controller.signal })
+        .then(r => { clearTimeout(timer); return r.text(); })
+        .catch(e => { clearTimeout(timer); throw e; });
+    };
+
+    const MAX_RETRIES = 3;
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const ts = Date.now();
+        const [payCSV, investCSV] = await Promise.all([
+          fetchWithTimeout(`${base}${SHEET_PAYMENTS_GID}&t=${ts}`),
+          fetchWithTimeout(`${base}${SHEET_INVEST_GID}&t=${ts}`),
+        ]);
+        setPayments(parsePaymentsCSV(payCSV));
+        const { stocks, cash, deposits, totalInputAmount } = parseInvestCSV(investCSV);
+        setStocks(stocks);
+        setCashBalance(cash);
+        setDeposits(deposits);
+        setStockInputAmount(totalInputAmount);
+        setSheetError(false);
+        setIsRefreshing(false);
+        return;
+      } catch {
+        if (attempt < MAX_RETRIES) {
+          await new Promise(r => setTimeout(r, 1500));
+        } else {
+          setSheetError(true);
+          setIsRefreshing(false);
+        }
+      }
+    }
   }, []);
 
   // Load from Google Sheets on mount
