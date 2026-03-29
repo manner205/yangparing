@@ -193,9 +193,10 @@ export default function App() {
     setIsRefreshing(true);
     setSheetError(false);
     const base = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=`;
+    const ts = Date.now();
     Promise.all([
-      fetch(base + SHEET_PAYMENTS_GID).then(r => r.text()),
-      fetch(base + SHEET_INVEST_GID).then(r => r.text()),
+      fetch(`${base}${SHEET_PAYMENTS_GID}&t=${ts}`, { cache: 'no-store' }).then(r => r.text()),
+      fetch(`${base}${SHEET_INVEST_GID}&t=${ts}`, { cache: 'no-store' }).then(r => r.text()),
     ]).then(([payCSV, investCSV]) => {
       setPayments(parsePaymentsCSV(payCSV));
       const { stocks, cash, deposits, totalInputAmount } = parseInvestCSV(investCSV);
