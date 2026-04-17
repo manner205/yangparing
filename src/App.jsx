@@ -1153,20 +1153,17 @@ function MoneyTab({isAdmin}) {
 
   return (
     <div style={styles.contentWrap}>
-      {/* Header */}
-      <div style={{...styles.sectionCard, background:"linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.08))", border:"1px solid rgba(99,102,241,0.2)", marginTop:20}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
-          <div>
-            <h3 style={{...styles.sectionTitle, margin:0}}>💎 머니머니</h3>
-            <p style={{fontSize:13,color:"rgba(255,255,255,0.45)",marginTop:6}}>연금, 재테크 등 유용한 금융 정보를 공유해요</p>
-          </div>
-          {isAdmin && (
-            <button style={styles.btnSmallPrimary} onClick={()=>setShowForm(!showForm)}>
-              {showForm ? "취소" : "+ 글 작성"}
-            </button>
-          )}
+      {/* 백테스트 섹션 */}
+      <BacktestSection />
+
+      {/* 글 작성 버튼 (관리자) */}
+      {isAdmin && (
+        <div style={{display:"flex",justifyContent:"flex-end",marginTop:16}}>
+          <button style={styles.btnSmallPrimary} onClick={()=>setShowForm(!showForm)}>
+            {showForm ? "취소" : "+ 글 작성"}
+          </button>
         </div>
-      </div>
+      )}
 
       {/* Write Form */}
       {showForm && isAdmin && (
@@ -1308,9 +1305,6 @@ function MoneyTab({isAdmin}) {
           </div>
         ))
       )}
-
-      {/* 백테스트 섹션 */}
-      <BacktestSection />
     </div>
   );
 }
