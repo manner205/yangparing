@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { db, storage } from "./firebase";
+import BacktestTab from "./BacktestTab";
 import { collection, doc, onSnapshot, addDoc, deleteDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
@@ -1306,6 +1307,40 @@ function MoneyTab({isAdmin}) {
             )}
           </div>
         ))
+      )}
+
+      {/* 백테스트 섹션 */}
+      <BacktestSection />
+    </div>
+  );
+}
+
+function BacktestSection() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ marginTop: 24 }}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        style={{
+          width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+          background: "linear-gradient(135deg,rgba(59,130,246,0.12),rgba(99,102,241,0.08))",
+          border: "1px solid rgba(59,130,246,0.25)", borderRadius: 16, padding: "14px 16px",
+          cursor: "pointer", color: "#fff",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 20 }}>🔬</span>
+          <div style={{ textAlign: "left" }}>
+            <div style={{ fontSize: 14, fontWeight: 700 }}>백테스트</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>직접 종목 구성해서 과거 성과 확인하기</div>
+          </div>
+        </div>
+        <span style={{ fontSize: 18, color: "#94a3b8", transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
+      </button>
+      {open && (
+        <div style={{ marginTop: 12 }}>
+          <BacktestTab />
+        </div>
       )}
     </div>
   );
