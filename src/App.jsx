@@ -1309,16 +1309,17 @@ function MoneyTab({isAdmin}) {
 }
 
 function BacktestSection() {
-  const [open, setOpen] = useState(false);
   return (
     <div style={{ marginTop: 24 }}>
-      <button
-        onClick={() => setOpen((v) => !v)}
+      <a
+        href="https://golden-path205.vercel.app/demo"
+        target="_blank"
+        rel="noopener noreferrer"
         style={{
           width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
           background: "linear-gradient(135deg,rgba(59,130,246,0.12),rgba(99,102,241,0.08))",
           border: "1px solid rgba(59,130,246,0.25)", borderRadius: 16, padding: "14px 16px",
-          cursor: "pointer", color: "#fff",
+          cursor: "pointer", color: "#fff", textDecoration: "none",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -1328,18 +1329,8 @@ function BacktestSection() {
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>직접 종목 구성해서 과거 성과 확인하기</div>
           </div>
         </div>
-        <span style={{ fontSize: 18, color: "#94a3b8", transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
-      </button>
-      {open && (
-        <div style={{ marginTop: 12, height: 700, borderRadius: 16, overflow: "hidden", border: "1px solid rgba(59,130,246,0.25)" }}>
-          <iframe
-            src="https://golden-path205.vercel.app/demo"
-            style={{ width: "100%", height: "100%", border: "none" }}
-            title="백테스트"
-            allow="accelerometer, autoplay, clipboard-write, encrypted-media, gyroscope, picture-in-picture"
-          />
-        </div>
-      )}
+        <span style={{ fontSize: 18, color: "#94a3b8" }}>↗</span>
+      </a>
     </div>
   );
 }
