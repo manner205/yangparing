@@ -169,7 +169,6 @@ export default function App() {
   const [adminForm, setAdminForm] = useState({id:"",pw:""});
   const [adminError, setAdminError] = useState("");
   const [activeTab, setActiveTab] = useState("home");
-  const swipeTouchStartX = useRef(null);
   const swipeTouchStartY = useRef(null);
   const [pullY, setPullY] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -467,30 +466,20 @@ export default function App() {
       {/* Content */}
       <main style={styles.main}
         onTouchStart={e => {
-          swipeTouchStartX.current = e.touches[0].clientX;
           swipeTouchStartY.current = e.touches[0].clientY;
         }}
         onTouchMove={e => {
           if (swipeTouchStartY.current === null) return;
           const dy = e.touches[0].clientY - swipeTouchStartY.current;
-          const dx = e.touches[0].clientX - swipeTouchStartX.current;
-          if (dy > 0 && Math.abs(dy) > Math.abs(dx) && window.scrollY === 0) {
+          if (dy > 0 && window.scrollY === 0) {
             setPullY(Math.min(dy, 160));
           }
         }}
         onTouchEnd={e => {
-          if (swipeTouchStartX.current === null) return;
-          const dx = e.changedTouches[0].clientX - swipeTouchStartX.current;
           const dy = e.changedTouches[0].clientY - swipeTouchStartY.current;
-          swipeTouchStartX.current = null;
           swipeTouchStartY.current = null;
           if (pullY >= 80 && !isRefreshing) loadSheetData();
           setPullY(0);
-          if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
-          const TAB_KEYS = ["home","payments","invest","money","vote"];
-          const cur = TAB_KEYS.indexOf(activeTab);
-          if (dx < 0 && cur < TAB_KEYS.length - 1) setActiveTab(TAB_KEYS[cur + 1]);
-          if (dx > 0 && cur > 0) setActiveTab(TAB_KEYS[cur - 1]);
         }}
       >
         {activeTab==="home" && <HomeTab totalCollected={totalCollected} stockTotal={stockTotal} depositTotal={depositTotal} tossBalance={tossBalance} progressPct={progressPct} currentProgress={currentProgress} members={MEMBERS} payments={payments} setActiveTab={setActiveTab} />}
