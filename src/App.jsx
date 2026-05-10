@@ -240,7 +240,7 @@ export default function App() {
         if (data.candidates) setCandidates(data.candidates);
         if (data.votes) setVotes(data.votes);
       }
-    });
+    }, (err) => { console.error("voteData listener error:", err); });
     return () => unsub();
   }, []);
 
@@ -1033,7 +1033,7 @@ function MoneyTab({isAdmin}) {
         .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
       setPosts(data);
       setLoading(false);
-    });
+    }, (err) => { console.error("moneyPosts listener error:", err); setLoading(false); });
     return () => unsub();
   }, []);
 
@@ -1359,7 +1359,7 @@ function TripBoard({members, isAdmin}) {
         .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
       setPosts(data);
       setLoading(false);
-    });
+    }, (err) => { console.error("tripPosts listener error:", err); setLoading(false); });
     return () => unsub();
   }, []);
 
