@@ -750,6 +750,9 @@ function PaymentsTab({payments, isAdmin, togglePayment, sheetError, isRefreshing
 const EMPTY_DEP = {name:"",startDate:"",endDate:"",amount:"",rate:"",maturityAmount:""};
 
 function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInvested, stockProfit, stockReturn, editingStock, setEditingStock, saveStockEdit, removeStock, showNewStock, setShowNewStock, newStock, setNewStock, addStock, saveStocks, saveDeposits, sheetError, isRefreshing, loadSheetData}) {
+  const [editingQtyAvg, setEditingQtyAvg] = useState(null);
+  const [qtyAvgForm, setQtyAvgForm] = useState({qty: 0, avgPrice: 0});
+  const [sheetSaving, setSheetSaving] = useState(false);
   const [editingDepId, setEditingDepId] = useState(null);
   const [depForm, setDepForm] = useState(EMPTY_DEP);
   const [showNewDep, setShowNewDep] = useState(false);
@@ -761,6 +764,22 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
   const [lookupResult, setLookupResult] = useState(null);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupError, setLookupError] = useState("");
+
+  const updateSheetStock = async (code, qty, avgPrice) => {
+    const url = import.meta.env.VITE_GAS_URL;
+    if (!url) return false;
+    try {
+      await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ code, qty, avgPrice }),
+      });
+      return true;
+    } catch(e) {
+      console.error('Sheet update failed:', e);
+      return false;
+    }
+  };
 
   const handleLookup = async () => {
     if (!lookupCode.trim()) return;
@@ -875,15 +894,25 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
         <div style={styles.stockCards}>
           {stocks.map(s=>(
             <div key={s.id} style={styles.stockCard}>
-              {editingStock===s.id && isAdmin ? (
+              {editingQtyAvg === s.id ? (
                 <div style={styles.stockEditWrap}>
-                  <input value={s.name} onChange={e=>saveStockEdit(s.id,"name",e.target.value)} style={styles.inputSmall} placeholder="종목명"/>
-                  <input value={s.code} onChange={e=>saveStockEdit(s.id,"code",e.target.value)} style={styles.inputSmall} placeholder="코드"/>
-                  <input type="number" value={s.price} onChange={e=>saveStockEdit(s.id,"price",e.target.value)} style={styles.inputSmall} placeholder="현재가"/>
-                  <input type="number" value={s.qty} onChange={e=>saveStockEdit(s.id,"qty",e.target.value)} style={styles.inputSmall} placeholder="수량"/>
+                  <p style={{margin:"0 0 8px",fontSize:13,fontWeight:600,color:"rgba(255,255,255,0.7)"}}>{s.name} 수정</p>
+                  <input type="number" value={qtyAvgForm.qty}
+                    onChange={e=>setQtyAvgForm({...qtyAvgForm, qty: Number(e.target.value)})}
+                    style={styles.inputSmall} placeholder="수량"/>
+                  <input type="number" value={qtyAvgForm.avgPrice}
+                    onChange={e=>setQtyAvgForm({...qtyAvgForm, avgPrice: Number(e.target.value)})}
+                    style={styles.inputSmall} placeholder="매입가"/>
                   <div style={{display:"flex",gap:6}}>
-                    <button style={styles.btnSmallPrimary} onClick={()=>setEditingStock(null)}>완료</button>
-                    <button style={styles.btnSmallDanger} onClick={()=>removeStock(s.id)}>삭제</button>
+                    <button style={styles.btnSmallPrimary} disabled={sheetSaving} onClick={async () => {
+                      setSheetSaving(true);
+                      saveStockEdit(s.id, "qty", qtyAvgForm.qty);
+                      saveStockEdit(s.id, "avgPrice", qtyAvgForm.avgPrice);
+                      await updateSheetStock(s.code, qtyAvgForm.qty, qtyAvgForm.avgPrice);
+                      setSheetSaving(false);
+                      setEditingQtyAvg(null);
+                    }}>{sheetSaving ? "저장 중..." : "저장"}</button>
+                    <button style={styles.btnSecondary} onClick={()=>setEditingQtyAvg(null)}>취소</button>
                   </div>
                 </div>
               ) : (
@@ -893,7 +922,12 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
                       <div style={styles.stockName}>{s.name}</div>
                       <div style={styles.stockCode}>{s.code}</div>
                     </div>
-                    {isAdmin && <button style={styles.editBtn} onClick={()=>setEditingStock(s.id)}>✏️</button>}
+                    {isAdmin && (
+                      <button style={styles.editBtn} onClick={()=>{
+                        setEditingQtyAvg(s.id);
+                        setQtyAvgForm({qty: s.qty, avgPrice: s.avgPrice});
+                      }}>✏️</button>
+                    )}
                   </div>
                   <div style={styles.stockDetails}>
                     <div style={styles.stockDetailItem}>
@@ -915,15 +949,15 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
                       <span style={{...styles.stockDetailVal,color:"#10B981",fontWeight:700}}>₩{fmt(s.price*s.qty)}</span>
                     </div>
                     {s.avgPrice > 0 && (() => {
+                      const totalProfit = (s.price - s.avgPrice) * s.qty;
                       const ret = ((s.price - s.avgPrice) / s.avgPrice * 100).toFixed(2);
-                      const profit = s.price - s.avgPrice;
-                      const color = profit > 0 ? "#F87171" : profit < 0 ? "#60A5FA" : "rgba(255,255,255,0.6)";
+                      const color = totalProfit > 0 ? "#F87171" : totalProfit < 0 ? "#60A5FA" : "rgba(255,255,255,0.6)";
                       return (
                         <div style={styles.stockDetailItem}>
                           <span style={styles.stockDetailLabel}>종목 수익률</span>
                           <span style={{...styles.stockDetailVal, color, fontWeight:700}}>
-                            {profit > 0 ? "+" : ""}{ret}%&nbsp;
-                            <span style={{fontSize:12, fontWeight:400}}>({profit > 0 ? "+" : ""}₩{fmt(profit)})</span>
+                            {totalProfit > 0 ? "+" : ""}{ret}%&nbsp;
+                            <span style={{fontSize:12, fontWeight:400}}>({totalProfit > 0 ? "+" : ""}₩{fmt(totalProfit)})</span>
                           </span>
                         </div>
                       );
