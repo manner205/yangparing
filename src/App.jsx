@@ -130,7 +130,8 @@ function parseInvestCSV(csv) {
       if (row[1] && row[2] && /^\d{6}$/.test(row[2])) {
         const price = parseInt(String(row[3]).replace(/[₩,]/g, '')) || 0;
         const qty = parseInt(row[4]) || 0;
-        stocks.push({ id: stockId++, name: row[1], code: row[2], price, qty });
+        const avgPrice = parseInt(String(row[6] ?? '').replace(/[₩,]/g, '')) || 0;
+        stocks.push({ id: stockId++, name: row[1], code: row[2], price, qty, avgPrice });
       }
     } else {
       if (row[1] && row[1] !== '종목명') {
@@ -900,6 +901,10 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
                       <span style={styles.stockDetailVal}>₩{fmt(s.price)}</span>
                     </div>
                     <div style={styles.stockDetailItem}>
+                      <span style={styles.stockDetailLabel}>매입가</span>
+                      <span style={styles.stockDetailVal}>{s.avgPrice ? `₩${fmt(s.avgPrice)}` : '-'}</span>
+                    </div>
+                    <div style={styles.stockDetailItem}>
                       <span style={styles.stockDetailLabel}>보유수량</span>
                       <span style={styles.stockDetailVal}>{s.qty}주</span>
                     </div>
@@ -907,6 +912,20 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
                       <span style={styles.stockDetailLabel}>평가금</span>
                       <span style={{...styles.stockDetailVal,color:"#10B981",fontWeight:700}}>₩{fmt(s.price*s.qty)}</span>
                     </div>
+                    {s.avgPrice > 0 && (() => {
+                      const ret = ((s.price - s.avgPrice) / s.avgPrice * 100).toFixed(2);
+                      const profit = s.price - s.avgPrice;
+                      const color = profit > 0 ? "#F87171" : profit < 0 ? "#60A5FA" : "rgba(255,255,255,0.6)";
+                      return (
+                        <div style={styles.stockDetailItem}>
+                          <span style={styles.stockDetailLabel}>종목 수익률</span>
+                          <span style={{...styles.stockDetailVal, color, fontWeight:700}}>
+                            {profit > 0 ? "+" : ""}{ret}%&nbsp;
+                            <span style={{fontSize:12, fontWeight:400}}>({profit > 0 ? "+" : ""}₩{fmt(profit)})</span>
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </>
               )}
