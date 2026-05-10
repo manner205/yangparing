@@ -898,11 +898,13 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
                   <div style={styles.stockDetails}>
                     <div style={styles.stockDetailItem}>
                       <span style={styles.stockDetailLabel}>현재가</span>
-                      <span style={styles.stockDetailVal}>₩{fmt(s.price)}</span>
+                      <span style={{...styles.stockDetailVal, color:"#34D399"}}>₩{fmt(s.price)}</span>
                     </div>
                     <div style={styles.stockDetailItem}>
                       <span style={styles.stockDetailLabel}>매입가</span>
-                      <span style={styles.stockDetailVal}>{s.avgPrice ? `₩${fmt(s.avgPrice)}` : '-'}</span>
+                      <span style={{...styles.stockDetailVal, color:"rgba(255,255,255,0.45)"}}>
+                        {s.avgPrice ? `₩${fmt(s.avgPrice)}` : '-'}
+                      </span>
                     </div>
                     <div style={styles.stockDetailItem}>
                       <span style={styles.stockDetailLabel}>보유수량</span>
