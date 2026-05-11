@@ -262,7 +262,7 @@ export default function App() {
       setStocks(updated);
     };
     refresh();
-    const id = setInterval(refresh, 10 * 60 * 1000);
+    const id = setInterval(refresh, 3 * 60 * 1000);
     return () => clearInterval(id);
   }, []);
 
