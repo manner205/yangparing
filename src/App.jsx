@@ -764,6 +764,7 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
   const [lookupResult, setLookupResult] = useState(null);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupError, setLookupError] = useState("");
+  const [stockSort, setStockSort] = useState("default");
 
   const updateSheetStock = async (code, qty, avgPrice) => {
     const url = import.meta.env.VITE_GAS_URL;
@@ -862,7 +863,19 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
       <div style={styles.sectionCard}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8,marginBottom:10}}>
           <h3 style={{...styles.sectionTitle,margin:0}}>보유 종목</h3>
-          {isAdmin && <button style={styles.btnSmallPrimary} onClick={()=>setShowNewStock(!showNewStock)}>+ 종목 추가</button>}
+          <div style={{display:"flex",gap:4,alignItems:"center"}}>
+            {["default","eval","return"].map(opt=>(
+              <button key={opt} onClick={()=>setStockSort(opt)} style={{
+                fontSize:11,padding:"3px 8px",borderRadius:6,border:"1px solid",cursor:"pointer",
+                background: stockSort===opt ? "rgba(16,185,129,0.2)" : "transparent",
+                borderColor: stockSort===opt ? "rgba(16,185,129,0.5)" : "rgba(255,255,255,0.1)",
+                color: stockSort===opt ? "#34D399" : "rgba(255,255,255,0.4)",
+              }}>
+                {opt==="default"?"기본":opt==="eval"?"평가금↓":"수익률↓"}
+              </button>
+            ))}
+            {isAdmin && <button style={{...styles.btnSmallPrimary,marginLeft:4}} onClick={()=>setShowNewStock(!showNewStock)}>+ 종목 추가</button>}
+          </div>
         </div>
 
         {showNewStock && isAdmin && (
@@ -892,7 +905,15 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
         )}
 
         <div style={styles.stockCards}>
-          {stocks.map(s=>(
+          {[...stocks].sort((a,b)=>{
+            if(stockSort==="eval") return (b.price*b.qty)-(a.price*a.qty);
+            if(stockSort==="return") {
+              const ra = a.avgPrice>0 ? (a.price-a.avgPrice)/a.avgPrice : -Infinity;
+              const rb = b.avgPrice>0 ? (b.price-b.avgPrice)/b.avgPrice : -Infinity;
+              return rb-ra;
+            }
+            return 0;
+          }).map(s=>(
             <div key={s.id} style={styles.stockCard}>
               {editingQtyAvg === s.id ? (
                 <div style={styles.stockEditWrap}>
