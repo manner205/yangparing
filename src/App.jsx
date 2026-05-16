@@ -496,7 +496,7 @@ export default function App() {
       </div>
 
       {/* Content */}
-      <main style={styles.main}
+      <main
         onTouchStart={e => {
           swipeTouchStartY.current = e.touches[0].clientY;
           swipeTouchStartX.current = e.touches[0].clientX;
