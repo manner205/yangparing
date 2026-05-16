@@ -1792,19 +1792,20 @@ function VoteTab({candidates, votes, voterName, setVoterName, handleVote, isAdmi
         )}
       </div>
 
-      {/* Admin: add candidate */}
-      {isAdmin && (
-        <div style={styles.sectionCard}>
-          <h3 style={styles.sectionTitle}>🛠 후보지 관리 (관리자)</h3>
-          <div style={styles.addCandForm}>
-            <input placeholder="이모지 (예: 🇯🇵)" value={newCandidate.emoji} onChange={e=>setNewCandidate({...newCandidate,emoji:e.target.value})} style={{...styles.inputSmall,width:80}}/>
-            <input placeholder="여행지 이름" value={newCandidate.name} onChange={e=>{const name=e.target.value; const detected=detectCountryEmoji(name); setNewCandidate({...newCandidate,name,emoji:detected||newCandidate.emoji});}} style={styles.inputSmall}/>
-            <input placeholder="설명" value={newCandidate.desc} onChange={e=>setNewCandidate({...newCandidate,desc:e.target.value})} style={{...styles.inputSmall,flex:1}}/>
-            <button style={styles.btnSmallPrimary} onClick={addCandidate}>추가</button>
-          </div>
-          <button style={{...styles.btnSmallDanger,marginTop:12}} onClick={resetVotes}>투표 초기화</button>
+      {/* Add candidate (all users) */}
+      <div style={styles.sectionCard}>
+        <h3 style={styles.sectionTitle}>🗺️ 여행지 추가 제안</h3>
+        <p style={{fontSize:13,color:"rgba(255,255,255,0.5)",marginBottom:14}}>가고 싶은 여행지를 직접 추가해보세요!</p>
+        <div style={styles.addCandForm}>
+          <input placeholder="이모지 (예: 🇯🇵)" value={newCandidate.emoji} onChange={e=>setNewCandidate({...newCandidate,emoji:e.target.value})} style={{...styles.inputSmall,width:80}}/>
+          <input placeholder="여행지 이름" value={newCandidate.name} onChange={e=>{const name=e.target.value; const detected=detectCountryEmoji(name); setNewCandidate({...newCandidate,name,emoji:detected||newCandidate.emoji});}} style={styles.inputSmall}/>
+          <input placeholder="설명" value={newCandidate.desc} onChange={e=>setNewCandidate({...newCandidate,desc:e.target.value})} style={{...styles.inputSmall,flex:1}}/>
+          <button style={styles.btnSmallPrimary} onClick={addCandidate}>추가</button>
         </div>
-      )}
+        {isAdmin && (
+          <button style={{...styles.btnSmallDanger,marginTop:12}} onClick={resetVotes}>투표 초기화</button>
+        )}
+      </div>
 
       {/* Trip bulletin board */}
       <TripBoard members={members} isAdmin={isAdmin} />
