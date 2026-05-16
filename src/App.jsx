@@ -521,7 +521,7 @@ function HomeTab({totalCollected, stockTotal, depositTotal, tossBalance, progres
               <h2 style={styles.heroTitle}>함께 모으는 여행 자금</h2>
               <div style={styles.heroAmount}>₩{fmt(totalCollected)}</div>
               <div style={{marginTop:10,marginBottom:4}}>
-                <span style={{fontSize:11,color:"rgba(255,255,255,0.62)"}}>총 평가금</span>
+                <span style={{fontSize:11,color:"rgba(255,255,255,0.72)"}}>총 평가금</span>
                 <div style={{fontSize:22,fontWeight:800,color:evalColor,letterSpacing:-0.5,filter:`drop-shadow(0 0 8px ${evalColor}88)`}}>₩{fmt(totalEval)}</div>
               </div>
               <p style={styles.heroSub}>목표 ₩{fmt(totalTarget)}</p>
@@ -534,7 +534,7 @@ function HomeTab({totalCollected, stockTotal, depositTotal, tossBalance, progres
               <h2 style={styles.heroTitle}>함께 모으는 여행 자금</h2>
               <div style={styles.heroAmount}>₩{fmt(totalCollected)}</div>
               <div style={{marginTop:10,marginBottom:4}}>
-                <span style={{fontSize:11,color:"rgba(255,255,255,0.62)"}}>총 평가금</span>
+                <span style={{fontSize:11,color:"rgba(255,255,255,0.72)"}}>총 평가금</span>
                 <div style={{fontSize:22,fontWeight:800,color:evalColor,letterSpacing:-0.5,filter:`drop-shadow(0 0 8px ${evalColor}88)`}}>₩{fmt(totalEval)}</div>
               </div>
               <p style={styles.heroSub}>목표 ₩{fmt(totalTarget)}</p>
@@ -957,7 +957,7 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
                     </div>
                     <div style={styles.stockDetailItem}>
                       <span style={styles.stockDetailLabel}>매입가</span>
-                      <span style={{...styles.stockDetailVal, color:"rgba(255,255,255,0.62)"}}>
+                      <span style={{...styles.stockDetailVal, color:"rgba(255,255,255,0.72)"}}>
                         {s.avgPrice ? `₩${fmt(s.avgPrice)}` : '-'}
                       </span>
                     </div>
@@ -1075,7 +1075,7 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
             )}
           </div>
         ))}
-        {deposits.length===0 && <p style={{textAlign:"center",color:"rgba(255,255,255,0.48)",fontSize:13,padding:"20px 0"}}>등록된 예금이 없습니다</p>}
+        {deposits.length===0 && <p style={{textAlign:"center",color:"rgba(255,255,255,0.58)",fontSize:13,padding:"20px 0"}}>등록된 예금이 없습니다</p>}
       </div>
     </div>
   );
@@ -1283,13 +1283,13 @@ function MoneyTab({isAdmin}) {
       {/* Posts */}
       {loading ? (
         <div style={{...styles.sectionCard, textAlign:"center", padding:"40px 20px", marginTop:16}}>
-          <p style={{color:"rgba(255,255,255,0.58)", fontSize:14}}>불러오는 중...</p>
+          <p style={{color:"rgba(255,255,255,0.68)", fontSize:14}}>불러오는 중...</p>
         </div>
       ) : posts.length === 0 ? (
         <div style={{...styles.sectionCard, textAlign:"center", padding:"40px 20px", marginTop:16}}>
           <div style={{fontSize:48, marginBottom:12}}>💡</div>
-          <p style={{color:"rgba(255,255,255,0.58)", fontSize:14}}>아직 공유된 정보가 없습니다</p>
-          <p style={{color:"rgba(255,255,255,0.58)", fontSize:12, marginTop:6}}>연금, 재테크 정보를 함께 나눠봐요!</p>
+          <p style={{color:"rgba(255,255,255,0.68)", fontSize:14}}>아직 공유된 정보가 없습니다</p>
+          <p style={{color:"rgba(255,255,255,0.68)", fontSize:12, marginTop:6}}>연금, 재테크 정보를 함께 나눠봐요!</p>
         </div>
       ) : (
         posts.map(post => (
@@ -1340,7 +1340,7 @@ function MoneyTab({isAdmin}) {
                         color:categoryColors[post.category]}}>
                         {post.category}
                       </span>
-                      <span style={{fontSize:11,color:"rgba(255,255,255,0.48)"}}>
+                      <span style={{fontSize:11,color:"rgba(255,255,255,0.58)"}}>
                         {post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString("ko-KR") : ""}
                       </span>
                     </div>
@@ -1516,7 +1516,7 @@ function TripBoard({members, isAdmin}) {
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
           <div>
             <h3 style={{...styles.sectionTitle, margin:0}}>📝 여행 이야기</h3>
-            <p style={{fontSize:13,color:"rgba(255,255,255,0.62)",marginTop:6}}>여행 정보, 후기, 계획을 자유롭게 공유해요</p>
+            <p style={{fontSize:13,color:"rgba(255,255,255,0.72)",marginTop:6}}>여행 정보, 후기, 계획을 자유롭게 공유해요</p>
           </div>
           <button style={styles.btnSmallPrimary} onClick={()=>setShowForm(!showForm)}>
             {showForm ? "취소" : "+ 글 작성"}
@@ -1567,13 +1567,13 @@ function TripBoard({members, isAdmin}) {
       {/* Posts */}
       {loading ? (
         <div style={{...styles.sectionCard,textAlign:"center",padding:"40px 20px",marginTop:12}}>
-          <p style={{color:"rgba(255,255,255,0.58)",fontSize:14}}>불러오는 중...</p>
+          <p style={{color:"rgba(255,255,255,0.68)",fontSize:14}}>불러오는 중...</p>
         </div>
       ) : posts.length === 0 ? (
         <div style={{...styles.sectionCard,textAlign:"center",padding:"40px 20px",marginTop:12}}>
           <div style={{fontSize:48,marginBottom:12}}>✈️</div>
-          <p style={{color:"rgba(255,255,255,0.58)",fontSize:14}}>아직 공유된 여행 이야기가 없어요</p>
-          <p style={{color:"rgba(255,255,255,0.58)",fontSize:12,marginTop:6}}>여행 정보, 후기를 함께 나눠봐요!</p>
+          <p style={{color:"rgba(255,255,255,0.68)",fontSize:14}}>아직 공유된 여행 이야기가 없어요</p>
+          <p style={{color:"rgba(255,255,255,0.68)",fontSize:12,marginTop:6}}>여행 정보, 후기를 함께 나눠봐요!</p>
         </div>
       ) : posts.map(post => (
         <div key={post.id} style={{...styles.sectionCard, marginTop:12}}>
@@ -1617,7 +1617,7 @@ function TripBoard({members, isAdmin}) {
                       background:"rgba(245,158,11,0.15)",border:"1px solid rgba(245,158,11,0.3)",color:"#F59E0B"}}>
                       {post.author}
                     </span>
-                    <span style={{fontSize:11,color:"rgba(255,255,255,0.48)"}}>
+                    <span style={{fontSize:11,color:"rgba(255,255,255,0.58)"}}>
                       {post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString("ko-KR") : ""}
                     </span>
                   </div>
@@ -1780,7 +1780,7 @@ const styles = {
   pinDot: {width:14,height:14,borderRadius:"50%",transition:"all 0.3s cubic-bezier(0.4,0,0.2,1)"},
   gateInput: {width:"100%",padding:"14px 16px",borderRadius:12,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",color:"#fff",fontSize:18,textAlign:"center",letterSpacing:12,outline:"none",transition:"border-color 0.3s"},
   gateError: {color:"#EF4444",fontSize:13,marginTop:8,animation:"pulse 0.5s"},
-  gateHint: {fontSize:13,color:"rgba(255,255,255,0.52)",marginTop:20},
+  gateHint: {fontSize:13,color:"rgba(255,255,255,0.62)",marginTop:20},
 
   // App
   appWrap: {minHeight:"100vh",background:"linear-gradient(180deg,#0f0f1a,#111122)",fontFamily:"'Noto Sans KR','Outfit',sans-serif"},
@@ -1791,7 +1791,7 @@ const styles = {
   headerLeft: {display:"flex",alignItems:"center",gap:12},
   headerLogo: {fontSize:32,filter:"drop-shadow(0 0 8px rgba(245,158,11,0.3))"},
   headerTitle: {fontSize:18,fontWeight:800,background:"linear-gradient(135deg,#F59E0B,#FBBF24)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"},
-  headerSub: {fontSize:11,color:"rgba(255,255,255,0.58)",marginTop:1},
+  headerSub: {fontSize:11,color:"rgba(255,255,255,0.68)",marginTop:1},
   headerRight: {display:"flex",alignItems:"center",gap:8},
   loginBtn: {padding:"8px 16px",borderRadius:10,border:"1px solid rgba(245,158,11,0.3)",background:"rgba(245,158,11,0.08)",color:"#F59E0B",fontSize:13,fontWeight:600,cursor:"pointer",transition:"all 0.2s"},
   adminBadge: {padding:"8px 16px",borderRadius:10,border:"1px solid rgba(245,158,11,0.4)",background:"linear-gradient(135deg,rgba(245,158,11,0.15),rgba(245,158,11,0.05))",color:"#FBBF24",fontSize:13,fontWeight:600,cursor:"pointer"},
@@ -1799,7 +1799,7 @@ const styles = {
   // Tabs
   tabBar: {background:"rgba(15,15,26,0.6)",backdropFilter:"blur(10px)",borderBottom:"1px solid rgba(255,255,255,0.04)",position:"sticky",top:56,zIndex:99,overflowX:"auto"},
   tabBarInner: {maxWidth:1200,margin:"0 auto",display:"flex",padding:"0 12px"},
-  tabBtn: {flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"12px 8px",border:"none",background:"transparent",color:"rgba(255,255,255,0.58)",fontSize:11,fontWeight:500,cursor:"pointer",borderBottom:"2px solid transparent",transition:"all 0.2s",minWidth:70},
+  tabBtn: {flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"12px 8px",border:"none",background:"transparent",color:"rgba(255,255,255,0.68)",fontSize:11,fontWeight:500,cursor:"pointer",borderBottom:"2px solid transparent",transition:"all 0.2s",minWidth:70},
   tabBtnActive: {color:"#F59E0B",borderBottomColor:"#F59E0B"},
   tabIcon: {fontSize:20},
   tabLabel: {fontSize:12,fontWeight:600},
@@ -1813,17 +1813,17 @@ const styles = {
   heroGlow: {position:"absolute",top:-60,right:-60,width:200,height:200,borderRadius:"50%",background:"radial-gradient(circle,rgba(245,158,11,0.15),transparent)",pointerEvents:"none"},
   heroTitle: {fontSize:16,color:"rgba(255,255,255,0.6)",fontWeight:500,marginBottom:8},
   heroAmount: {fontSize:36,fontWeight:900,background:"linear-gradient(135deg,#FBBF24,#F59E0B,#D97706)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:-1},
-  heroSub: {fontSize:13,color:"rgba(255,255,255,0.62)",marginTop:8},
+  heroSub: {fontSize:13,color:"rgba(255,255,255,0.72)",marginTop:8},
   progressBarOuter: {marginTop:20,height:24,borderRadius:12,background:"rgba(255,255,255,0.06)",overflow:"hidden"},
   progressBarInner: {height:"100%",borderRadius:12,background:"linear-gradient(90deg,#F59E0B,#FBBF24,#F59E0B)",backgroundSize:"200% 100%",animation:"shimmer 3s linear infinite",display:"flex",alignItems:"center",justifyContent:"flex-end",paddingRight:10,minWidth:50,transition:"width 0.6s ease"},
   progressText: {fontSize:11,fontWeight:700,color:"#0f0f1a"},
-  progressLabel: {fontSize:12,color:"rgba(255,255,255,0.58)",marginTop:8},
+  progressLabel: {fontSize:12,color:"rgba(255,255,255,0.68)",marginTop:8},
 
   // Cards
   cardGrid: {display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginTop:16},
   summaryCard: {padding:20,borderRadius:16,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",textAlign:"center"},
   cardIcon: {width:44,height:44,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,margin:"0 auto 10px"},
-  cardLabel: {fontSize:12,color:"rgba(255,255,255,0.62)",marginBottom:4},
+  cardLabel: {fontSize:12,color:"rgba(255,255,255,0.72)",marginBottom:4},
   cardValue: {fontSize:18,fontWeight:700,color:"#F5F5F5"},
 
   // Section
@@ -1837,12 +1837,12 @@ const styles = {
   memberName: {fontSize:13,fontWeight:600,marginBottom:4},
   memberMiniBar: {height:4,borderRadius:2,background:"rgba(255,255,255,0.08)",overflow:"hidden",marginBottom:4},
   memberMiniBarFill: {height:"100%",borderRadius:2,background:"linear-gradient(90deg,#10B981,#34D399)",transition:"width 0.4s ease"},
-  memberCount: {fontSize:11,color:"rgba(255,255,255,0.58)"},
+  memberCount: {fontSize:11,color:"rgba(255,255,255,0.68)"},
 
   // Info
   infoGrid: {display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:8},
   infoItem: {display:"flex",justifyContent:"space-between",padding:"10px 14px",borderRadius:10,background:"rgba(255,255,255,0.03)",fontSize:13},
-  infoLabel: {color:"rgba(255,255,255,0.62)",fontWeight:500},
+  infoLabel: {color:"rgba(255,255,255,0.72)",fontWeight:500},
   infoValue: {fontWeight:600,color:"#F5F5F5",textAlign:"right"},
 
   // Table
@@ -1859,43 +1859,43 @@ const styles = {
   memberDetailHeader: {display:"flex",alignItems:"center",gap:12,marginBottom:16},
   memberDetailAvatar: {width:48,height:48,borderRadius:"50%",background:"linear-gradient(135deg,#F59E0B,#D97706)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:800,color:"#0f0f1a"},
   memberDetailName: {fontSize:20,fontWeight:700},
-  memberDetailSub: {fontSize:13,color:"rgba(255,255,255,0.62)"},
+  memberDetailSub: {fontSize:13,color:"rgba(255,255,255,0.72)"},
   roundGrid: {display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(90px,1fr))",gap:8},
   roundCell: {padding:"10px 8px",borderRadius:10,textAlign:"center",transition:"all 0.2s"},
   roundLabel: {fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:2},
-  roundNum: {fontSize:10,color:"rgba(255,255,255,0.48)",marginTop:2},
+  roundNum: {fontSize:10,color:"rgba(255,255,255,0.58)",marginTop:2},
 
   // Invest
   investHero: {padding:"14px 16px",borderRadius:16,background:"linear-gradient(135deg,rgba(16,185,129,0.1),rgba(99,102,241,0.06))",border:"1px solid rgba(16,185,129,0.12)",marginTop:12},
   investTitle: {fontSize:16,fontWeight:700,marginBottom:10},
   investRow: {display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:8},
   investStat: {display:"flex",flexDirection:"column",gap:4},
-  investLabel: {fontSize:12,color:"rgba(255,255,255,0.58)"},
+  investLabel: {fontSize:12,color:"rgba(255,255,255,0.68)"},
   investVal: {fontSize:20,fontWeight:800},
 
   stockCards: {display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:8},
   stockCard: {padding:"10px 12px",borderRadius:12,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",transition:"all 0.2s"},
   stockCardHeader: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"},
   stockName: {fontSize:13,fontWeight:700},
-  stockCode: {fontSize:10,color:"rgba(255,255,255,0.52)",marginTop:1},
+  stockCode: {fontSize:10,color:"rgba(255,255,255,0.62)",marginTop:1},
   stockDetails: {marginTop:6,display:"flex",flexDirection:"column",gap:3},
   stockDetailItem: {display:"flex",justifyContent:"space-between",fontSize:12},
-  stockDetailLabel: {color:"rgba(255,255,255,0.58)"},
+  stockDetailLabel: {color:"rgba(255,255,255,0.68)"},
   stockDetailVal: {fontWeight:600},
   stockEditWrap: {display:"flex",flexDirection:"column",gap:8},
   editBtn: {background:"none",border:"none",fontSize:16,cursor:"pointer",padding:4,opacity:0.6},
-  disclaimer: {fontSize:11,color:"rgba(255,255,255,0.48)",marginTop:16,textAlign:"center"},
+  disclaimer: {fontSize:11,color:"rgba(255,255,255,0.58)",marginTop:16,textAlign:"center"},
 
   // Deposit
   depositCard: {padding:"10px 14px",borderRadius:12,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)"},
   depositName: {fontSize:14,fontWeight:700},
   depositGrid: {display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:2},
   depositItem: {display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid rgba(255,255,255,0.04)",fontSize:12},
-  depositLabel: {color:"rgba(255,255,255,0.58)"},
+  depositLabel: {color:"rgba(255,255,255,0.68)"},
   depositEditForm: {display:"flex",flexDirection:"column",gap:8},
 
   // Vote
-  voteSubtitle: {fontSize:14,color:"rgba(255,255,255,0.62)",marginBottom:20,marginTop:-8},
+  voteSubtitle: {fontSize:14,color:"rgba(255,255,255,0.72)",marginBottom:20,marginTop:-8},
   voterSelect: {display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"},
   voterLabel: {fontSize:13,fontWeight:600,whiteSpace:"nowrap"},
   votedBadge: {fontSize:13,color:"#10B981",fontWeight:600},
@@ -1904,14 +1904,14 @@ const styles = {
   winBadge: {position:"absolute",top:10,right:10,fontSize:12,fontWeight:700,color:"#FBBF24"},
   voteEmoji: {fontSize:42,marginBottom:8},
   voteName: {fontSize:17,fontWeight:700,marginBottom:4},
-  voteDesc: {fontSize:12,color:"rgba(255,255,255,0.58)",marginBottom:14},
+  voteDesc: {fontSize:12,color:"rgba(255,255,255,0.68)",marginBottom:14},
   voteBarOuter: {height:8,borderRadius:4,background:"rgba(255,255,255,0.06)",overflow:"hidden",marginBottom:6},
   voteBarInner: {height:"100%",borderRadius:4,background:"linear-gradient(90deg,#F59E0B,#FBBF24)",transition:"width 0.5s ease",minWidth:0},
   voteCount: {fontSize:13,fontWeight:600,color:"rgba(255,255,255,0.6)",marginBottom:10},
   voteBtn: {padding:"10px 24px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#F59E0B,#D97706)",color:"#0f0f1a",fontWeight:700,fontSize:14,cursor:"pointer",transition:"all 0.2s"},
   myVoteMark: {fontSize:13,color:"#10B981",fontWeight:600,marginTop:4},
   removeCandBtn: {marginTop:8,padding:"4px 10px",borderRadius:6,border:"1px solid rgba(239,68,68,0.3)",background:"rgba(239,68,68,0.1)",color:"#EF4444",fontSize:11,cursor:"pointer"},
-  voteStatus: {textAlign:"center",marginTop:20,fontSize:13,color:"rgba(255,255,255,0.58)"},
+  voteStatus: {textAlign:"center",marginTop:20,fontSize:13,color:"rgba(255,255,255,0.68)"},
   voterList: {marginTop:12,padding:14,borderRadius:10,background:"rgba(255,255,255,0.03)",fontSize:12,lineHeight:2.2,display:"flex",flexWrap:"wrap",alignItems:"center",gap:4},
   voterTag: {display:"inline-block",padding:"3px 10px",borderRadius:20,background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.15)",fontSize:12,color:"#FBBF24",marginRight:4},
 
@@ -1933,5 +1933,5 @@ const styles = {
   errorText: {fontSize:12,color:"#EF4444",marginTop:-4,marginBottom:4},
 
   // Footer
-  footer: {textAlign:"center",padding:"24px 20px",borderTop:"1px solid rgba(255,255,255,0.04)",fontSize:12,color:"rgba(255,255,255,0.58)"},
+  footer: {textAlign:"center",padding:"24px 20px",borderTop:"1px solid rgba(255,255,255,0.04)",fontSize:12,color:"rgba(255,255,255,0.68)"},
 };
