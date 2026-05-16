@@ -860,7 +860,7 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
 
       {/* Stock Table */}
       <div style={styles.sectionCard}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8,marginBottom:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8,marginBottom:10}}>
           <h3 style={{...styles.sectionTitle,margin:0}}>보유 종목</h3>
           {isAdmin && <button style={styles.btnSmallPrimary} onClick={()=>setShowNewStock(!showNewStock)}>+ 종목 추가</button>}
         </div>
@@ -988,7 +988,7 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
 
       {/* Deposit */}
       <div style={styles.sectionCard}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
           <h3 style={{...styles.sectionTitle,margin:0}}>🏦 예금 현황</h3>
           {isAdmin && <button style={styles.btnSmallPrimary} onClick={()=>setShowNewDep(!showNewDep)}>+ 예금 추가</button>}
         </div>
@@ -1014,7 +1014,7 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
         )}
 
         {deposits.map(dep=>(
-          <div key={dep.id} style={{...styles.depositCard,marginBottom:12}}>
+          <div key={dep.id} style={{...styles.depositCard,marginBottom:6}}>
             {editingDepId===dep.id && isAdmin ? (
               <div style={styles.depositEditForm}>
                 <input placeholder="상품명" value={depForm.name} onChange={e=>setDepForm({...depForm,name:e.target.value})} style={styles.inputSmall}/>
@@ -1033,7 +1033,7 @@ function InvestTab({stocks, cashBalance, deposits, isAdmin, stockTotal, stockInv
               </div>
             ) : (
               <>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
                   <div style={styles.depositName}>{dep.name}</div>
                   {isAdmin && (
                     <div style={{display:"flex",gap:6}}>
@@ -1845,20 +1845,20 @@ const styles = {
   roundNum: {fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:2},
 
   // Invest
-  investHero: {padding:"28px 24px",borderRadius:20,background:"linear-gradient(135deg,rgba(16,185,129,0.1),rgba(99,102,241,0.06))",border:"1px solid rgba(16,185,129,0.12)",marginTop:20},
-  investTitle: {fontSize:18,fontWeight:700,marginBottom:16},
-  investRow: {display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12},
+  investHero: {padding:"14px 16px",borderRadius:16,background:"linear-gradient(135deg,rgba(16,185,129,0.1),rgba(99,102,241,0.06))",border:"1px solid rgba(16,185,129,0.12)",marginTop:12},
+  investTitle: {fontSize:16,fontWeight:700,marginBottom:10},
+  investRow: {display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:8},
   investStat: {display:"flex",flexDirection:"column",gap:4},
   investLabel: {fontSize:12,color:"rgba(255,255,255,0.4)"},
   investVal: {fontSize:20,fontWeight:800},
 
-  stockCards: {display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:12},
-  stockCard: {padding:16,borderRadius:14,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",transition:"all 0.2s"},
+  stockCards: {display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:8},
+  stockCard: {padding:"10px 12px",borderRadius:12,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",transition:"all 0.2s"},
   stockCardHeader: {display:"flex",justifyContent:"space-between",alignItems:"flex-start"},
-  stockName: {fontSize:15,fontWeight:700},
-  stockCode: {fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2},
-  stockDetails: {marginTop:12,display:"flex",flexDirection:"column",gap:6},
-  stockDetailItem: {display:"flex",justifyContent:"space-between",fontSize:13},
+  stockName: {fontSize:13,fontWeight:700},
+  stockCode: {fontSize:10,color:"rgba(255,255,255,0.35)",marginTop:1},
+  stockDetails: {marginTop:6,display:"flex",flexDirection:"column",gap:3},
+  stockDetailItem: {display:"flex",justifyContent:"space-between",fontSize:12},
   stockDetailLabel: {color:"rgba(255,255,255,0.4)"},
   stockDetailVal: {fontWeight:600},
   stockEditWrap: {display:"flex",flexDirection:"column",gap:8},
@@ -1866,10 +1866,10 @@ const styles = {
   disclaimer: {fontSize:11,color:"rgba(255,255,255,0.3)",marginTop:16,textAlign:"center"},
 
   // Deposit
-  depositCard: {padding:20,borderRadius:14,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)"},
-  depositName: {fontSize:16,fontWeight:700,marginBottom:12},
-  depositGrid: {display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:8},
-  depositItem: {display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,0.04)",fontSize:13},
+  depositCard: {padding:"10px 14px",borderRadius:12,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)"},
+  depositName: {fontSize:14,fontWeight:700},
+  depositGrid: {display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:2},
+  depositItem: {display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid rgba(255,255,255,0.04)",fontSize:12},
   depositLabel: {color:"rgba(255,255,255,0.4)"},
   depositEditForm: {display:"flex",flexDirection:"column",gap:8},
 
