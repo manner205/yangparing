@@ -278,6 +278,28 @@ export default function App() {
     try { await setDoc(doc(db, "trip", "voteData"), { candidates: cands, votes: v }); } catch(e) { console.error(e); }
   }, []);
 
+  const TABS = [
+    {key:"home",label:"홈",icon:"🏠"},
+    {key:"payments",label:"납입현황",icon:"💰"},
+    {key:"invest",label:"투자현황",icon:"📈"},
+    {key:"money",label:"머니머니",icon:"💎"},
+    {key:"vote",label:"여행정보",icon:"✈️"},
+  ];
+
+  const navigateTab = useCallback((direction) => {
+    setActiveTab(prev => {
+      const currentIdx = TABS.findIndex(t => t.key === prev);
+      const nextIdx = currentIdx + direction;
+      if (nextIdx >= 0 && nextIdx < TABS.length) {
+        setIsSwipeAnimating(true);
+        setSwipeOffset(0);
+        setTimeout(() => setIsSwipeAnimating(false), 300);
+        return TABS[nextIdx].key;
+      }
+      return prev;
+    });
+  }, []);
+
   // ─── Access Gate ──────────────────────────────────────────────
   if (!accessGranted) {
     return (
@@ -383,25 +405,6 @@ export default function App() {
   const removeStock = (id) => {
     saveStocks(stocks.filter(s=>s.id!==id), cashBalance);
   };
-
-  const TABS = [
-    {key:"home",label:"홈",icon:"🏠"},
-    {key:"payments",label:"납입현황",icon:"💰"},
-    {key:"invest",label:"투자현황",icon:"📈"},
-    {key:"money",label:"머니머니",icon:"💎"},
-    {key:"vote",label:"여행정보",icon:"✈️"},
-  ];
-
-  const navigateTab = useCallback((direction) => {
-    const currentIdx = TABS.findIndex(t => t.key === activeTab);
-    const nextIdx = currentIdx + direction;
-    if (nextIdx >= 0 && nextIdx < TABS.length) {
-      setIsSwipeAnimating(true);
-      setSwipeOffset(0);
-      setActiveTab(TABS[nextIdx].key);
-      setTimeout(() => setIsSwipeAnimating(false), 300);
-    }
-  }, [activeTab]);
 
   return (
     <div style={styles.appWrap}>
