@@ -171,12 +171,8 @@ export default function App() {
   const [adminError, setAdminError] = useState("");
   const [activeTab, setActiveTab] = useState("home");
   const swipeTouchStartY = useRef(null);
-  const swipeTouchStartX = useRef(null);
-  const swipeDirection = useRef(null); // 'horizontal' | 'vertical' | null
   const [pullY, setPullY] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [swipeOffset, setSwipeOffset] = useState(0);
-  const [isSwipeAnimating, setIsSwipeAnimating] = useState(false);
 
   // Data states
   const [payments, setPayments] = useState(null);
@@ -285,20 +281,6 @@ export default function App() {
     {key:"money",label:"머니머니",icon:"💎"},
     {key:"vote",label:"여행정보",icon:"✈️"},
   ];
-
-  const navigateTab = useCallback((direction) => {
-    setActiveTab(prev => {
-      const currentIdx = TABS.findIndex(t => t.key === prev);
-      const nextIdx = currentIdx + direction;
-      if (nextIdx >= 0 && nextIdx < TABS.length) {
-        setIsSwipeAnimating(true);
-        setSwipeOffset(0);
-        setTimeout(() => setIsSwipeAnimating(false), 300);
-        return TABS[nextIdx].key;
-      }
-      return prev;
-    });
-  }, []);
 
   // ─── Access Gate ──────────────────────────────────────────────
   if (!accessGranted) {
@@ -471,22 +453,6 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Swipe dot indicator */}
-      <div style={{display:'flex', justifyContent:'center', alignItems:'center', gap:6, padding:'6px 0', background:'rgba(0,0,0,0.15)'}}>
-        {TABS.map((t,i) => (
-          <button key={t.key} onClick={()=>setActiveTab(t.key)} style={{
-            width: activeTab===t.key ? 20 : 6,
-            height: 6,
-            borderRadius: 3,
-            background: activeTab===t.key ? '#F59E0B' : 'rgba(255,255,255,0.3)',
-            border: 'none',
-            padding: 0,
-            cursor: 'pointer',
-            transition: 'all 0.3s ease',
-          }} />
-        ))}
-      </div>
-
       {/* Pull to refresh indicator */}
       <div style={{
         textAlign:'center', overflow:'hidden', display:'flex',
@@ -499,65 +465,29 @@ export default function App() {
       </div>
 
       {/* Content */}
-      <main
+      <main style={styles.main}
         onTouchStart={e => {
           swipeTouchStartY.current = e.touches[0].clientY;
-          swipeTouchStartX.current = e.touches[0].clientX;
-          swipeDirection.current = null;
         }}
         onTouchMove={e => {
           if (swipeTouchStartY.current === null) return;
-          const dx = e.touches[0].clientX - swipeTouchStartX.current;
           const dy = e.touches[0].clientY - swipeTouchStartY.current;
-
-          if (swipeDirection.current === null) {
-            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) {
-              swipeDirection.current = 'horizontal';
-            } else if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) {
-              swipeDirection.current = 'vertical';
-            }
-          }
-
-          if (swipeDirection.current === 'horizontal') {
-            e.preventDefault();
-            setSwipeOffset(dx);
-          } else if (swipeDirection.current === 'vertical') {
-            if (dy > 0 && window.scrollY === 0) {
-              setPullY(Math.min(dy, 160));
-            }
+          if (dy > 0 && window.scrollY === 0) {
+            setPullY(Math.min(dy, 160));
           }
         }}
         onTouchEnd={e => {
-          const dx = e.changedTouches[0].clientX - swipeTouchStartX.current;
           const dy = e.changedTouches[0].clientY - swipeTouchStartY.current;
-
-          if (swipeDirection.current === 'horizontal') {
-            if (dx < -60) navigateTab(1);
-            else if (dx > 60) navigateTab(-1);
-            else { setIsSwipeAnimating(true); setSwipeOffset(0); setTimeout(() => setIsSwipeAnimating(false), 300); }
-          } else {
-            if (pullY >= 80 && !isRefreshing) loadSheetData();
-            setPullY(0);
-          }
-
           swipeTouchStartY.current = null;
-          swipeTouchStartX.current = null;
-          swipeDirection.current = null;
-          setSwipeOffset(0);
+          if (pullY >= 80 && !isRefreshing) loadSheetData();
+          setPullY(0);
         }}
-        style={{...styles.main, touchAction: 'pan-y'}}
       >
-        <div style={{
-          transform: `translateX(${swipeOffset}px)`,
-          transition: isSwipeAnimating ? 'transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)' : 'none',
-          willChange: 'transform',
-        }}>
-          {activeTab==="home" && <HomeTab totalCollected={totalCollected} stockTotal={stockTotal} depositTotal={depositTotal} tossBalance={tossBalance} progressPct={progressPct} currentProgress={currentProgress} members={MEMBERS} payments={payments} setActiveTab={setActiveTab} />}
-          {activeTab==="payments" && <PaymentsTab payments={payments} isAdmin={isAdmin} togglePayment={togglePayment} sheetError={sheetError} isRefreshing={isRefreshing} loadSheetData={loadSheetData} />}
-          {activeTab==="invest" && <InvestTab stocks={stocks} cashBalance={cashBalance} deposits={deposits} isAdmin={isAdmin} stockTotal={stockTotal} stockInvested={stockInvested} stockProfit={stockProfit} stockReturn={stockReturn} editingStock={editingStock} setEditingStock={setEditingStock} saveStockEdit={saveStockEdit} removeStock={removeStock} showNewStock={showNewStock} setShowNewStock={setShowNewStock} newStock={newStock} setNewStock={setNewStock} addStock={addStock} saveStocks={saveStocks} saveDeposits={saveDeposits} sheetError={sheetError} isRefreshing={isRefreshing} loadSheetData={loadSheetData} />}
-          {activeTab==="money" && <MoneyTab isAdmin={isAdmin} />}
-          {activeTab==="vote" && <VoteTab candidates={candidates} votes={votes} voterName={voterName} setVoterName={setVoterName} handleVote={handleVote} isAdmin={isAdmin} addCandidate={addCandidate} newCandidate={newCandidate} setNewCandidate={setNewCandidate} removeCandidate={removeCandidate} members={MEMBERS} saveVotes={saveVotes}/>}
-        </div>
+        {activeTab==="home" && <HomeTab totalCollected={totalCollected} stockTotal={stockTotal} depositTotal={depositTotal} tossBalance={tossBalance} progressPct={progressPct} currentProgress={currentProgress} members={MEMBERS} payments={payments} setActiveTab={setActiveTab} />}
+        {activeTab==="payments" && <PaymentsTab payments={payments} isAdmin={isAdmin} togglePayment={togglePayment} sheetError={sheetError} isRefreshing={isRefreshing} loadSheetData={loadSheetData} />}
+        {activeTab==="invest" && <InvestTab stocks={stocks} cashBalance={cashBalance} deposits={deposits} isAdmin={isAdmin} stockTotal={stockTotal} stockInvested={stockInvested} stockProfit={stockProfit} stockReturn={stockReturn} editingStock={editingStock} setEditingStock={setEditingStock} saveStockEdit={saveStockEdit} removeStock={removeStock} showNewStock={showNewStock} setShowNewStock={setShowNewStock} newStock={newStock} setNewStock={setNewStock} addStock={addStock} saveStocks={saveStocks} saveDeposits={saveDeposits} sheetError={sheetError} isRefreshing={isRefreshing} loadSheetData={loadSheetData} />}
+        {activeTab==="money" && <MoneyTab isAdmin={isAdmin} />}
+        {activeTab==="vote" && <VoteTab candidates={candidates} votes={votes} voterName={voterName} setVoterName={setVoterName} handleVote={handleVote} isAdmin={isAdmin} addCandidate={addCandidate} newCandidate={newCandidate} setNewCandidate={setNewCandidate} removeCandidate={removeCandidate} members={MEMBERS} saveVotes={saveVotes}/>}
       </main>
 
       {/* Footer */}
